@@ -80,7 +80,7 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
             <div className="bg-danger/10 border border-danger/30 rounded-card px-3 py-2.5 mb-4">
               <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-danger mb-1">
                 <Tag size={12} />
-                Flagged
+                Redtag
               </p>
               <p className="text-sm text-yard-text">{trailer.flag_note}</p>
             </div>
