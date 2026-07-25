@@ -3,6 +3,8 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
+const PROTECTED_EMAIL = "foustbrothersllc@gmail.com";
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await req.json();
@@ -11,7 +13,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing userId." }, { status: 400 });
     }
 
-    // Confirm the caller is a logged-in, approved admin before allowing anything.
     const supabase = createClient();
     const {
       data: { user },
@@ -40,8 +41,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Deleting the auth user cascades to the profiles row automatically
-    // (profiles.id references auth.users on delete cascade).
+    const { data: targetProfile } = await admin
+      .from("profiles")
+      .select("email")
+      .eq("id", userId)
+      .single();
+
+    if (targetProfile?.email?.toLowerCase() === PROTECTED_EMAIL) {
+      return NextResponse.json(
+        { error: "This account cannot be deleted." },
+        { status: 403 }
+      );
+    }
+
     const { error } = await admin.auth.admin.deleteUser(userId);
 
     if (error) {
