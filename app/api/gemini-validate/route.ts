@@ -4,14 +4,7 @@ import { RawImportRow, ParsedTrailerRow } from "@/lib/types";
 
 export const runtime = "nodejs";
 
-const SCHEMA_FIELDS = [
-  "equipment_number",
-  "pickup_number",
-  "origin",
-  "destination",
-  "sort_type",
-  "load_percentage",
-] as const;
+const REQUIRED_FIELDS = ["equipment_number", "pickup_number"] as const;
 
 function buildPrompt(rows: RawImportRow[]): string {
   return `You are a strict data-cleaning engine for a rail yard trailer inventory system.
@@ -22,13 +15,15 @@ onto this exact schema and clean the values:
 
 - equipment_number: string. Uppercase, no spaces (e.g. "emhu489025" -> "EMHU489025").
 - pickup_number: string.
-- origin: string.
-- destination: string.
-- sort_type: string.
+- origin: string or null.
+- origin_sort_type: string or null (the sort type at the origin).
+- destination: string or null.
+- destination_sort_type: string or null (the sort type at the destination).
 - load_percentage: integer 0-100, or null if not present/not applicable.
 
-Required fields: equipment_number, pickup_number, origin, destination, sort_type.
-load_percentage is optional.
+Required fields: equipment_number, pickup_number.
+origin, origin_sort_type, destination, destination_sort_type, and load_percentage are all optional.
+All text values should be returned in UPPERCASE.
 
 For each input row (in the same order as given, 0-indexed as row_index), output an object:
 {
@@ -36,10 +31,11 @@ For each input row (in the same order as given, 0-indexed as row_index), output 
   "equipment_number": string | null,
   "pickup_number": string | null,
   "origin": string | null,
+  "origin_sort_type": string | null,
   "destination": string | null,
-  "sort_type": string | null,
+  "destination_sort_type": string | null,
   "load_percentage": number | null,
-  "issues": string[]   // human-readable problems, e.g. "Missing destination". Empty array if the row is clean.
+  "issues": string[]   // human-readable problems, e.g. "Missing pickup number". Empty array if the row is clean.
 }
 
 Respond with ONLY a raw JSON array of these objects — no markdown fences, no commentary, no preamble.
@@ -94,14 +90,7 @@ export async function POST(req: NextRequest) {
     // model missed something, and re-uppercase equipment numbers.
     const cleaned: ParsedTrailerRow[] = parsed.map((row, i) => {
       const issues = [...(row.issues ?? [])];
-      const required: (typeof SCHEMA_FIELDS)[number][] = [
-        "equipment_number",
-        "pickup_number",
-        "origin",
-        "destination",
-        "sort_type",
-      ];
-      for (const field of required) {
+      for (const field of REQUIRED_FIELDS) {
         const value = row[field];
         if (value === null || value === undefined || String(value).trim() === "") {
           const label = field.replace("_", " ");
