@@ -6,7 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 interface ConfirmModalProps {
   open: boolean;
   title: string;
-  message: string;
+  message: React.ReactNode;
   confirmLabel?: string;
   variant?: "primary" | "danger";
   loading?: boolean;
@@ -43,7 +43,7 @@ export function ConfirmModal({
         </>
       }
     >
-      <p className="text-xl leading-relaxed text-yard-text">{message}</p>
+      <div className="text-xl leading-relaxed text-yard-text">{message}</div>
     </Modal>
   );
 }
