@@ -47,47 +47,4 @@ export function FlagTrailerModal({ trailer, onClose }: FlagTrailerModalProps) {
     const { error } = await supabase
       .from("trailers")
       .update({ flag_note: null })
-      .eq("id", trailer!.id);
-    setSaving(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    setNote("");
-    onClose();
-  }
-
-  return (
-    <Modal
-      open={!!trailer}
-      onClose={onClose}
-      title="Redtag Trailer"
-      compact
-      alwaysCentered
-      footer={
-        <>
-          {trailer.flag_note && (
-            <Button
-              variant="secondary"
-              onClick={handleClear}
-              loading={saving}
-              className="flex-1"
-            >
-              Clear Redtag
-            </Button>
-          )}
-          <Button variant="danger" onClick={handleSave} loading={saving} className="flex-1">
-            Save Redtag
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-3">
-        <div>
-          <label className="block text-xs uppercase tracking-wide text-yard-muted mb-1.5">
-            What's wrong with this trailer?
-          </label>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value.toUpperCase())}
-            rows={4}
+      .eq("id",
