@@ -4,9 +4,10 @@ export interface Trailer {
   id: string;
   equipment_number: string;
   pickup_number: string;
-  origin: string;
-  destination: string;
-  sort_type: string;
+  origin: string | null;
+  origin_sort_type: string | null;
+  destination: string | null;
+  destination_sort_type: string | null;
   load_percentage: number | null;
   assigned_to_id: string | null;
   assigned_driver_name: string | null;
@@ -52,8 +53,9 @@ export interface ParsedTrailerRow {
   equipment_number: string | null;
   pickup_number: string | null;
   origin: string | null;
+  origin_sort_type: string | null;
   destination: string | null;
-  sort_type: string | null;
+  destination_sort_type: string | null;
   load_percentage: number | null;
   issues: string[];
 }
