@@ -16,7 +16,7 @@ export default async function RootPage() {
   const admin = createAdminClient();
   const { data: profile } = await admin
     .from("profiles")
-    .select("is_approved")
+    .select("is_approved, is_admin")
     .eq("id", user.id)
     .single();
 
@@ -24,5 +24,5 @@ export default async function RootPage() {
     redirect("/pending");
   }
 
-  redirect("/dashboard");
+  redirect(profile.is_admin ? "/admin" : "/dashboard");
 }
