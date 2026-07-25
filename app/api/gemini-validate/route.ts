@@ -14,6 +14,12 @@ You will receive an array of raw spreadsheet rows with arbitrary/inconsistent co
 onto this exact schema and clean the values:
 
 - equipment_number: string. Uppercase, no spaces (e.g. "emhu489025" -> "EMHU489025").
+  Column headers that mean this field include: "Equipment Number", "Equipment #", "Trailer",
+  "Trailer #", "Trailer Number", "Unit", "Unit #", "Container", "Rental", "UPI".
+  If no column header clearly matches any of these, look at the FIRST column in the sheet —
+  if its values look like equipment/trailer identifiers (a mix of letters and digits, no
+  spaces, e.g. "EMHU489025", "PTLZ568244", "853124"), use that column as equipment_number
+  even though its header didn't match.
 - pickup_number: string.
 - origin: string or null.
 - origin_sort_type: string or null (the sort type at the origin).
