@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Rail Sheet",
   description: "Real-time yard operations",
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
