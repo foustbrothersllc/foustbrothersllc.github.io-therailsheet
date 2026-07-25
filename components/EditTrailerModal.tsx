@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { Trailer } from "@/lib/types";
-import { standardizeEquipmentNumber } from "@/lib/utils";
+import { standardizeEquipmentNumber, upper } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 interface EditTrailerModalProps {
@@ -16,8 +16,9 @@ const emptyForm = {
   equipment_number: "",
   pickup_number: "",
   origin: "",
+  origin_sort_type: "",
   destination: "",
-  sort_type: "",
+  destination_sort_type: "",
   load_percentage: "",
 };
 
@@ -32,9 +33,10 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
       setForm({
         equipment_number: trailer.equipment_number,
         pickup_number: trailer.pickup_number,
-        origin: trailer.origin,
-        destination: trailer.destination,
-        sort_type: trailer.sort_type,
+        origin: trailer.origin ?? "",
+        origin_sort_type: trailer.origin_sort_type ?? "",
+        destination: trailer.destination ?? "",
+        destination_sort_type: trailer.destination_sort_type ?? "",
         load_percentage: trailer.load_percentage?.toString() ?? "",
       });
       setError(null);
@@ -52,9 +54,10 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
       .update({
         equipment_number: standardizeEquipmentNumber(form.equipment_number),
         pickup_number: form.pickup_number.trim(),
-        origin: form.origin.trim(),
-        destination: form.destination.trim(),
-        sort_type: form.sort_type.trim(),
+        origin: form.origin.trim() || null,
+        origin_sort_type: form.origin_sort_type.trim() || null,
+        destination: form.destination.trim() || null,
+        destination_sort_type: form.destination_sort_type.trim() || null,
         load_percentage: form.load_percentage ? Number(form.load_percentage) : null,
       })
       .eq("id", trailer!.id);
@@ -75,7 +78,12 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
       <input
         value={form[key]}
         inputMode={numeric ? "numeric" : undefined}
-        onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+        onChange={(e) =>
+          setForm((f) => ({
+            ...f,
+            [key]: numeric ? e.target.value : upper(e.target.value),
+          }))
+        }
         className="w-full h-11 px-3.5 rounded-card bg-yard-bg border border-yard-border focus:border-amber outline-none text-sm"
       />
     </div>
@@ -98,11 +106,18 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
       }
     >
       <div className="space-y-3">
-        {field("equipment_number", "Equipment Number")}
-        {field("pickup_number", "Pickup #")}
-        {field("origin", "Origin")}
-        {field("destination", "Destination")}
-        {field("sort_type", "Sort Type")}
+        <div className="grid grid-cols-2 gap-3">
+          {field("equipment_number", "Equipment Number")}
+          {field("pickup_number", "Pickup #")}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {field("origin", "Origin")}
+          {field("origin_sort_type", "Origin Sort")}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {field("destination", "Destination")}
+          {field("destination_sort_type", "Destination Sort")}
+        </div>
         {field("load_percentage", "Load %", true)}
         {error && (
           <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2">
