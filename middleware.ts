@@ -31,20 +31,25 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
 
-  // Not logged in and hitting a protected route -> send to /login
-  if (!user && !isPublic) {
+  function redirectWithCookies(pathname: string) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    url.pathname = pathname;
+    const redirectResponse = NextResponse.redirect(url);
+    // Carry over any session cookies Supabase just refreshed onto the
+    // redirect response — otherwise the refreshed session gets dropped
+    // and the browser loops forever between /login and the protected page.
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
   }
 
-  // Logged in but on /login or /register -> send to /dashboard.
-  // (Approval-gating of /dashboard itself happens server-side on that page,
-  // since it needs a profile lookup, not just a session check.)
+  if (!user && !isPublic) {
+    return redirectWithCookies("/login");
+  }
+
   if (user && (path.startsWith("/login") || path.startsWith("/register"))) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    return redirectWithCookies("/dashboard");
   }
 
   return response;
