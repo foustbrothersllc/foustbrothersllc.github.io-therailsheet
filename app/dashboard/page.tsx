@@ -21,6 +21,7 @@ export default async function DashboardPage() {
 
   if (!profile) redirect("/login");
   if (!profile.is_approved) redirect("/pending");
+  if (profile.is_admin) redirect("/admin");
 
   return <DashboardClient initialProfile={profile} />;
 }
