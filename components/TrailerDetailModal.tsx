@@ -75,9 +75,14 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
       >
         <div>
           <DetailRow label="Pickup #" value={trailer.pickup_number} />
-          <DetailRow label="Origin" value={trailer.origin} />
-          <DetailRow label="Destination" value={trailer.destination} />
-          <DetailRow label="Sort Type" value={trailer.sort_type} />
+          {trailer.origin && <DetailRow label="Origin" value={trailer.origin} />}
+          {trailer.origin_sort_type && (
+            <DetailRow label="Origin Sort" value={trailer.origin_sort_type} />
+          )}
+          {trailer.destination && <DetailRow label="Destination" value={trailer.destination} />}
+          {trailer.destination_sort_type && (
+            <DetailRow label="Destination Sort" value={trailer.destination_sort_type} />
+          )}
           {trailer.load_percentage != null && (
             <DetailRow label="Load %" value={`${trailer.load_percentage}%`} />
           )}
