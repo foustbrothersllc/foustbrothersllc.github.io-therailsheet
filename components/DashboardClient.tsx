@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTrailers } from "@/hooks/useTrailers";
 import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
-import { LogOut } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
 import { useState } from "react";
 
 interface DashboardClientProps {
@@ -19,7 +19,14 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
   const profile = liveProfile ?? initialProfile;
   const { atRail, departed, loading } = useTrailers();
   const [tab, setTab] = useState<"at_rail" | "departed">("at_rail");
+  const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Trailer | null>(null);
+
+  const matches = (t: Trailer) =>
+    query.trim() === "" || t.equipment_number.includes(query.trim().toUpperCase());
+
+  const filteredAtRail = atRail.filter(matches);
+  const filteredDeparted = departed.filter(matches);
 
   const Column = ({
     title,
@@ -31,7 +38,7 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
     accent: string;
   }) => (
     <div className="flex-1 min-h-0 flex flex-col">
-      <div className="flex items-center gap-2 px-1 mb-3">
+      <div className="hidden sm:flex items-center gap-2 px-1 mb-3">
         <span className={cn("h-2 w-2 rounded-full", accent)} />
         <h2 className="font-display text-sm uppercase tracking-widest text-yard-muted">
           {title}
@@ -70,22 +77,44 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
         </div>
       </header>
 
-      {/* Mobile top-tabs */}
+      {/* Mobile controls: category dropdown + search */}
       <div className="sm:hidden flex px-4 pt-4 gap-2 shrink-0">
-        {(["at_rail", "departed"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              "flex-1 h-11 rounded-card font-display text-sm uppercase tracking-wide transition-colors",
-              tab === t
-                ? "bg-amber text-yard-bg"
-                : "bg-yard-panel text-yard-muted border border-yard-border"
-            )}
-          >
-            {t === "at_rail" ? "At Rail" : "Departed"}
-          </button>
-        ))}
+        <select
+          value={tab}
+          onChange={(e) => setTab(e.target.value as "at_rail" | "departed")}
+          className="h-11 px-3 rounded-card bg-yard-panel border border-yard-border text-sm font-display uppercase tracking-wide text-yard-text outline-none focus:border-amber"
+        >
+          <option value="at_rail">At Rail</option>
+          <option value="departed">Departed</option>
+        </select>
+        <div className="relative flex-1">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-yard-faint pointer-events-none"
+          />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search equipment number"
+            className="w-full h-11 pl-9 pr-3 rounded-card bg-yard-panel border border-yard-border text-sm outline-none focus:border-amber"
+          />
+        </div>
+      </div>
+
+      {/* Desktop search */}
+      <div className="hidden sm:block px-6 pt-6 shrink-0">
+        <div className="relative max-w-sm">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-yard-faint pointer-events-none"
+          />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search equipment number"
+            className="w-full h-11 pl-9 pr-3 rounded-card bg-yard-panel border border-yard-border text-sm outline-none focus:border-amber"
+          />
+        </div>
       </div>
 
       <main className="flex-1 min-h-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-4 flex flex-col sm:flex-row sm:gap-8">
@@ -93,11 +122,21 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
           <p className="text-yard-faint text-sm px-1 py-8">Loading yard board…</p>
         ) : (
           <>
-            <div className={cn("sm:flex-1 sm:flex sm:min-h-0", tab === "at_rail" ? "flex flex-1 min-h-0" : "hidden")}>
-              <Column title="At Rail" trailers={atRail} accent="bg-amber" />
+            <div
+              className={cn(
+                "sm:flex-1 sm:flex sm:min-h-0",
+                tab === "at_rail" ? "flex flex-1 min-h-0" : "hidden"
+              )}
+            >
+              <Column title="At Rail" trailers={filteredAtRail} accent="bg-amber" />
             </div>
-            <div className={cn("sm:flex-1 sm:flex sm:min-h-0", tab === "departed" ? "flex flex-1 min-h-0" : "hidden")}>
-              <Column title="Departed" trailers={departed} accent="bg-depart" />
+            <div
+              className={cn(
+                "sm:flex-1 sm:flex sm:min-h-0",
+                tab === "departed" ? "flex flex-1 min-h-0" : "hidden"
+              )}
+            >
+              <Column title="Departed" trailers={filteredDeparted} accent="bg-depart" />
             </div>
           </>
         )}
