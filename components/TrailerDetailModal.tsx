@@ -15,9 +15,9 @@ interface TrailerDetailModalProps {
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-yard-border last:border-b-0">
-      <span className="text-xs uppercase tracking-wide text-yard-muted">{label}</span>
-      <span className="text-sm font-medium text-yard-text text-right">{value}</span>
+    <div className="flex items-center justify-between py-3.5 border-b border-yard-border last:border-b-0">
+      <span className="text-sm uppercase tracking-wide text-yard-muted">{label}</span>
+      <span className="text-lg font-semibold text-yard-text text-right">{value}</span>
     </div>
   );
 }
@@ -65,6 +65,7 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
         open={!!trailer && !confirming}
         onClose={onClose}
         title={trailer.equipment_number}
+        titleClassName="text-4xl"
         footer={
           canAccept ? (
             <Button className="w-full" onClick={() => setConfirming(true)}>
