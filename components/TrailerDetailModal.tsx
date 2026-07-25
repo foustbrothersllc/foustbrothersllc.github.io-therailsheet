@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { Profile, Trailer } from "@/lib/types";
+import { Tag } from "lucide-react";
 import { useState } from "react";
 
 interface TrailerDetailModalProps {
@@ -75,6 +76,15 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
         }
       >
         <div>
+          {trailer.flag_note && (
+            <div className="bg-danger/10 border border-danger/30 rounded-card px-3 py-2.5 mb-4">
+              <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-danger mb-1">
+                <Tag size={12} />
+                Flagged
+              </p>
+              <p className="text-sm text-yard-text">{trailer.flag_note}</p>
+            </div>
+          )}
           <DetailRow label="Pickup #" value={trailer.pickup_number} />
           {trailer.origin && <DetailRow label="Origin" value={trailer.origin} />}
           {trailer.origin_sort_type && (
