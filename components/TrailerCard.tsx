@@ -22,7 +22,7 @@ export function TrailerCard({ trailer, onClick }: TrailerCardProps) {
         {trailer.flag_note && (
           <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-danger bg-danger/15 border border-danger/30 rounded-full px-2 py-0.5">
             <Tag size={10} />
-            Flagged
+            Redtag
           </span>
         )}
         <p className="font-stencil font-bold text-2xl sm:text-3xl tracking-wider text-yard-text">
