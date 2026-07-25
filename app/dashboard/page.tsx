@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { DashboardClient } from "@/components/DashboardClient";
 
 export const dynamic = "force-dynamic";
@@ -12,15 +12,12 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
-  const { data: profile, error: profileError } = await supabase
+  const admin = createAdminClient();
+  const { data: profile } = await admin
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
-
-  if (profileError) {
-    console.error("PROFILE QUERY ERROR:", JSON.stringify(profileError));
-  }
 
   if (!profile) redirect("/login");
   if (!profile.is_approved) redirect("/pending");
