@@ -5,6 +5,7 @@ import { AdminTrailerCard } from "@/components/AdminTrailerCard";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { CsvImportModal } from "@/components/CsvImportModal";
 import { EditTrailerModal } from "@/components/EditTrailerModal";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { UserSidebar } from "@/components/UserSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrailers } from "@/hooks/useTrailers";
@@ -22,7 +23,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const supabase = createClient();
   const { profile: liveProfile, signOut } = useAuth();
   const profile = liveProfile ?? initialProfile;
-  const { atRail, departed } = useTrailers();
+  const { atRail, departed, refresh } = useTrailers();
 
   const [editing, setEditing] = useState<Trailer | null>(null);
   const [deleting, setDeleting] = useState<Trailer | null>(null);
@@ -125,7 +126,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                 </h2>
                 <span className="text-xs text-yard-faint">{filteredAtRail.length}</span>
               </div>
-              <div className="flex-1 overflow-y-auto scrollbar-hidden space-y-2.5 pb-4">
+              <PullToRefresh onRefresh={refresh} className="flex-1 space-y-2.5 pb-4">
                 {filteredAtRail.length === 0 && (
                   <p className="text-sm text-yard-faint px-1 py-8 text-center">Nothing here.</p>
                 )}
@@ -138,7 +139,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                     onDelete={() => setDeleting(t)}
                   />
                 ))}
-              </div>
+              </PullToRefresh>
             </div>
 
             <div className="flex-1 min-h-0 flex flex-col">
@@ -149,7 +150,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                 </h2>
                 <span className="text-xs text-yard-faint">{filteredDeparted.length}</span>
               </div>
-              <div className="flex-1 overflow-y-auto scrollbar-hidden space-y-2.5 pb-4">
+              <PullToRefresh onRefresh={refresh} className="flex-1 space-y-2.5 pb-4">
                 {filteredDeparted.length === 0 && (
                   <p className="text-sm text-yard-faint px-1 py-8 text-center">Nothing here.</p>
                 )}
@@ -162,7 +163,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                     onDelete={() => setDeleting(t)}
                   />
                 ))}
-              </div>
+              </PullToRefresh>
             </div>
           </div>
         </div>
