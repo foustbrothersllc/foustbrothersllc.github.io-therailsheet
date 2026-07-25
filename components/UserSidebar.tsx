@@ -1,5 +1,6 @@
 "use client";
 
+import { EditUserModal } from "@/components/EditUserModal";
 import { createClient } from "@/lib/supabase/client";
 import { usePresence } from "@/hooks/usePresence";
 import { Profile } from "@/lib/types";
@@ -13,6 +14,7 @@ interface UserSidebarProps {
 export function UserSidebar({ currentProfile }: UserSidebarProps) {
   const supabase = createClient();
   const [users, setUsers] = useState<Profile[]>([]);
+  const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const onlineIds = usePresence(currentProfile);
 
   useEffect(() => {
@@ -55,7 +57,8 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
       .eq("id", id);
   }
 
-  async function toggleAdmin(id: string, current: boolean) {
+  async function toggleAdmin(e: React.MouseEvent, id: string, current: boolean) {
+    e.stopPropagation();
     await supabase.from("profiles").update({ is_admin: !current }).eq("id", id);
   }
 
@@ -111,9 +114,10 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
             {active.map((u) => {
               const isOnline = onlineIds.has(u.id);
               return (
-                <div
+                <button
                   key={u.id}
-                  className="flex items-center gap-3 px-2 py-2 rounded-card hover:bg-yard-panel"
+                  onClick={() => setEditingUser(u)}
+                  className="w-full flex items-center gap-3 px-2 py-2 rounded-card hover:bg-yard-panel text-left"
                 >
                   <div className="relative shrink-0">
                     <div className="h-9 w-9 rounded-full bg-yard-panel border border-yard-border flex items-center justify-center text-xs font-semibold text-yard-muted">
@@ -135,8 +139,9 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
                     </p>
                   </div>
                   {u.id !== currentProfile.id && (
-                    <button
-                      onClick={() => toggleAdmin(u.id, u.is_admin)}
+                    <span
+                      role="button"
+                      onClick={(e) => toggleAdmin(e, u.id, u.is_admin)}
                       className={cn(
                         "shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full border",
                         u.is_admin
@@ -145,14 +150,16 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
                       )}
                     >
                       {u.is_admin ? "Admin" : "Driver"}
-                    </button>
+                    </span>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>
         </div>
       </div>
+
+      <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} />
     </aside>
   );
 }
