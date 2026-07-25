@@ -7,6 +7,11 @@ export function standardizeEquipmentNumber(value: string): string {
   return value.trim().toUpperCase().replace(/\s+/g, "");
 }
 
+/** Live uppercase-as-you-type for free-text fields (pickup #, origin, sort types, etc.) */
+export function upper(value: string): string {
+  return value.toUpperCase();
+}
+
 export function hoursSince(isoTimestamp: string): number {
   const then = new Date(isoTimestamp).getTime();
   const now = Date.now();
