@@ -1,6 +1,7 @@
 "use client";
 
 import { NavShield } from "@/components/NavShield";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { TrailerCard } from "@/components/TrailerCard";
 import { TrailerDetailModal } from "@/components/TrailerDetailModal";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,7 +20,7 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
   const { profile: liveProfile, signOut } = useAuth();
   const profile = liveProfile ?? initialProfile;
   usePresence(profile); // joins the shared presence channel so admins see this driver as active
-  const { atRail, departed, loading } = useTrailers();
+  const { atRail, departed, loading, refresh } = useTrailers();
   const [tab, setTab] = useState<"at_rail" | "departed">("at_rail");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Trailer | null>(null);
@@ -47,14 +48,14 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
         </h2>
         <span className="text-xs text-yard-faint">{trailers.length}</span>
       </div>
-      <div className="flex-1 overflow-y-auto scrollbar-hidden space-y-2.5 pb-6">
+      <PullToRefresh onRefresh={refresh} className="flex-1 space-y-2.5 pb-6">
         {trailers.length === 0 && (
           <p className="text-sm text-yard-faint px-1 py-8 text-center">Nothing here.</p>
         )}
         {trailers.map((t) => (
           <TrailerCard key={t.id} trailer={t} onClick={() => setSelected(t)} />
         ))}
-      </div>
+      </PullToRefresh>
     </div>
   );
 
