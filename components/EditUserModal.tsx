@@ -13,6 +13,8 @@ interface EditUserModalProps {
   onClose: () => void;
 }
 
+const PROTECTED_EMAIL = "foustbrothersllc@gmail.com";
+
 export function EditUserModal({ user, onClose }: EditUserModalProps) {
   const supabase = createClient();
   const [firstName, setFirstName] = useState("");
@@ -35,6 +37,7 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
 
   if (!user) return null;
 
+  const isProtected = user.email.toLowerCase() === PROTECTED_EMAIL;
   const employeeIdValid = /^[0-9]{6,8}$/.test(employeeId);
 
   async function handleSave() {
@@ -94,14 +97,16 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
         title="Edit User"
         compact
         headerActions={
-          <button
-            onClick={() => setConfirmingDelete(true)}
-            aria-label="Delete user"
-            title="Delete user"
-            className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-danger hover:bg-danger/10"
-          >
-            <Trash2 size={17} />
-          </button>
+          !isProtected ? (
+            <button
+              onClick={() => setConfirmingDelete(true)}
+              aria-label="Delete user"
+              title="Delete user"
+              className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-danger hover:bg-danger/10"
+            >
+              <Trash2 size={17} />
+            </button>
+          ) : undefined
         }
         footer={
           <>
