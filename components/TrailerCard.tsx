@@ -29,7 +29,7 @@ export function TrailerCard({ trailer, onClick }: TrailerCardProps) {
             {trailer.equipment_number}
           </p>
           <p className="text-sm text-yard-muted truncate mt-0.5">
-            {trailer.destination}
+            {trailer.destination ?? "No destination"}
             {trailer.load_percentage != null && (
               <span className="text-yard-faint"> · {trailer.load_percentage}%</span>
             )}
