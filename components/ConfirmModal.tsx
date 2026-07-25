@@ -29,20 +29,21 @@ export function ConfirmModal({
       open={open}
       onClose={onCancel}
       title={title}
+      titleClassName="text-2xl"
       compact
       alwaysCentered
       footer={
         <>
-          <Button variant="secondary" onClick={onCancel} className="flex-1">
+          <Button variant="secondary" onClick={onCancel} className="flex-1" size="lg">
             No, Cancel
           </Button>
-          <Button variant={variant} onClick={onConfirm} loading={loading} className="flex-1">
+          <Button variant={variant} onClick={onConfirm} loading={loading} className="flex-1" size="lg">
             {confirmLabel}
           </Button>
         </>
       }
     >
-      <p className="text-sm text-yard-muted">{message}</p>
+      <p className="text-xl leading-relaxed text-yard-text">{message}</p>
     </Modal>
   );
 }
