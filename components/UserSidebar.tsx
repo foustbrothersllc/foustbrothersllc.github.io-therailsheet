@@ -11,6 +11,8 @@ interface UserSidebarProps {
   currentProfile: Profile;
 }
 
+const PROTECTED_EMAIL = "foustbrothersllc@gmail.com";
+
 export function UserSidebar({ currentProfile }: UserSidebarProps) {
   const supabase = createClient();
   const [users, setUsers] = useState<Profile[]>([]);
@@ -57,8 +59,9 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
       .eq("id", id);
   }
 
-  async function toggleAdmin(e: React.MouseEvent, id: string, current: boolean) {
+  async function toggleAdmin(e: React.MouseEvent, id: string, current: boolean, email: string) {
     e.stopPropagation();
+    if (email.toLowerCase() === PROTECTED_EMAIL) return;
     await supabase.from("profiles").update({ is_admin: !current }).eq("id", id);
   }
 
@@ -113,6 +116,7 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
           <div className="space-y-1.5">
             {active.map((u) => {
               const isOnline = onlineIds.has(u.id);
+              const isProtected = u.email.toLowerCase() === PROTECTED_EMAIL;
               return (
                 <button
                   key={u.id}
@@ -141,12 +145,14 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
                   {u.id !== currentProfile.id && (
                     <span
                       role="button"
-                      onClick={(e) => toggleAdmin(e, u.id, u.is_admin)}
+                      onClick={(e) => toggleAdmin(e, u.id, u.is_admin, u.email)}
+                      title={isProtected ? "This account cannot be changed" : undefined}
                       className={cn(
                         "shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full border",
                         u.is_admin
                           ? "text-amber border-amber/40 bg-amber/10"
-                          : "text-yard-faint border-yard-border"
+                          : "text-yard-faint border-yard-border",
+                        isProtected && "opacity-60 cursor-not-allowed"
                       )}
                     >
                       {u.is_admin ? "Admin" : "Driver"}
