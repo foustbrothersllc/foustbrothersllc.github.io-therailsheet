@@ -2,9 +2,11 @@
 
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { FlagTrailerModal } from "@/components/FlagTrailerModal";
 import { createClient } from "@/lib/supabase/client";
 import { Trailer } from "@/lib/types";
-import { standardizeEquipmentNumber, upper } from "@/lib/utils";
+import { standardizeEquipmentNumber, upper, cn } from "@/lib/utils";
+import { Tag } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface EditTrailerModalProps {
@@ -27,6 +29,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [flagging, setFlagging] = useState(false);
 
   useEffect(() => {
     if (trailer) {
@@ -90,41 +93,66 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
   );
 
   return (
-    <Modal
-      open={!!trailer}
-      onClose={onClose}
-      title="Edit Trailer"
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose} className="flex-1">
-            Cancel
-          </Button>
-          <Button onClick={handleSave} loading={saving} className="flex-1">
-            Save Changes
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          {field("equipment_number", "Equipment Number")}
-          {field("pickup_number", "Pickup #")}
+    <>
+      <Modal
+        open={!!trailer && !flagging}
+        onClose={onClose}
+        title="Edit Trailer"
+        headerActions={
+          <button
+            onClick={() => setFlagging(true)}
+            aria-label="Flag trailer"
+            title="Flag trailer"
+            className={cn(
+              "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
+              trailer.flag_note
+                ? "text-danger bg-danger/15 hover:bg-danger/25"
+                : "text-yard-muted hover:text-danger hover:bg-danger/10"
+            )}
+          >
+            <Tag size={17} />
+          </button>
+        }
+        footer={
+          <>
+            <Button variant="secondary" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
+            <Button onClick={handleSave} loading={saving} className="flex-1">
+              Save Changes
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          {trailer.flag_note && (
+            <div className="bg-danger/10 border border-danger/30 rounded-card px-3 py-2.5">
+              <p className="text-xs uppercase tracking-wide text-danger mb-1">Flagged</p>
+              <p className="text-sm text-yard-text">{trailer.flag_note}</p>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            {field("equipment_number", "Equipment Number")}
+            {field("pickup_number", "Pickup #")}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {field("origin", "Origin")}
+            {field("origin_sort_type", "Origin Sort")}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {field("destination", "Destination")}
+            {field("destination_sort_type", "Destination Sort")}
+          </div>
+          {field("load_percentage", "Load %", true)}
+          {error && (
+            <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2">
+              {error}
+            </p>
+          )}
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {field("origin", "Origin")}
-          {field("origin_sort_type", "Origin Sort")}
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {field("destination", "Destination")}
-          {field("destination_sort_type", "Destination Sort")}
-        </div>
-        {field("load_percentage", "Load %", true)}
-        {error && (
-          <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2">
-            {error}
-          </p>
-        )}
-      </div>
-    </Modal>
+      </Modal>
+
+      <FlagTrailerModal trailer={flagging ? trailer : null} onClose={() => setFlagging(false)} />
+    </>
   );
 }
