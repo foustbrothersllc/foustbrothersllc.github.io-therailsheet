@@ -14,6 +14,8 @@ interface ModalProps {
   compact?: boolean;
   /** Override the title's text size/weight classes for a specific modal */
   titleClassName?: string;
+  /** Extra buttons rendered in the header, to the left of the close button */
+  headerActions?: React.ReactNode;
 }
 
 export function Modal({
@@ -24,6 +26,7 @@ export function Modal({
   footer,
   compact,
   titleClassName,
+  headerActions,
 }: ModalProps) {
   useEffect(() => {
     if (!open) return;
@@ -56,22 +59,25 @@ export function Modal({
           compact ? "sm:max-w-sm" : "sm:max-w-lg"
         )}
       >
-        <div className="sticky top-0 flex items-center justify-between px-5 py-4 bg-yard-panel border-b border-yard-border">
+        <div className="sticky top-0 flex items-center justify-between px-5 py-4 bg-yard-panel border-b border-yard-border gap-3">
           <h2
             className={cn(
-              "font-display tracking-wide uppercase text-yard-text",
+              "font-display tracking-wide uppercase text-yard-text truncate",
               titleClassName ?? "text-lg"
             )}
           >
             {title}
           </h2>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-yard-text hover:bg-yard-border shrink-0"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            {headerActions}
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-yard-text hover:bg-yard-border"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
         <div className="px-5 py-4">{children}</div>
         {footer && (
