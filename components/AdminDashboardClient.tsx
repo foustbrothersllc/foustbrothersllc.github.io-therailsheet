@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTrailers } from "@/hooks/useTrailers";
 import { createClient } from "@/lib/supabase/client";
 import { Profile, Trailer } from "@/lib/types";
-import { LogOut, Plus, Upload } from "lucide-react";
+import { LogOut, Plus, Search, Upload } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -29,6 +29,13 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const [showAddForm, setShowAddForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [deletingBusy, setDeletingBusy] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const matches = (t: Trailer) =>
+    query.trim() === "" || t.equipment_number.includes(query.trim().toUpperCase());
+
+  const filteredAtRail = atRail.filter(matches);
+  const filteredDeparted = departed.filter(matches);
 
   async function handleRevert(trailer: Trailer) {
     await supabase
@@ -89,6 +96,18 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
             >
               <Upload size={15} /> Import CSV / Excel
             </button>
+            <div className="relative flex-1 min-w-[180px] max-w-sm ml-auto">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-yard-faint pointer-events-none"
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search equipment number"
+                className="w-full h-9 pl-9 pr-3 rounded-card bg-yard-panel border border-yard-border text-sm outline-none focus:border-amber"
+              />
+            </div>
           </div>
 
           {showAddForm && (
@@ -104,13 +123,13 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                 <h2 className="font-display text-sm uppercase tracking-widest text-yard-muted">
                   At Rail
                 </h2>
-                <span className="text-xs text-yard-faint">{atRail.length}</span>
+                <span className="text-xs text-yard-faint">{filteredAtRail.length}</span>
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-hidden space-y-2.5 pb-4">
-                {atRail.length === 0 && (
+                {filteredAtRail.length === 0 && (
                   <p className="text-sm text-yard-faint px-1 py-8 text-center">Nothing here.</p>
                 )}
-                {atRail.map((t) => (
+                {filteredAtRail.map((t) => (
                   <AdminTrailerCard
                     key={t.id}
                     trailer={t}
@@ -128,13 +147,13 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                 <h2 className="font-display text-sm uppercase tracking-widest text-yard-muted">
                   Departed
                 </h2>
-                <span className="text-xs text-yard-faint">{departed.length}</span>
+                <span className="text-xs text-yard-faint">{filteredDeparted.length}</span>
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-hidden space-y-2.5 pb-4">
-                {departed.length === 0 && (
+                {filteredDeparted.length === 0 && (
                   <p className="text-sm text-yard-faint px-1 py-8 text-center">Nothing here.</p>
                 )}
-                {departed.map((t) => (
+                {filteredDeparted.map((t) => (
                   <AdminTrailerCard
                     key={t.id}
                     trailer={t}
