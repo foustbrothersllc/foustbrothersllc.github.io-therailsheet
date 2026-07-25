@@ -2,7 +2,7 @@
 
 import { Trailer } from "@/lib/types";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import { Pencil, RotateCcw, Trash2, User } from "lucide-react";
+import { Pencil, RotateCcw, Tag, Trash2, User } from "lucide-react";
 
 interface AdminTrailerCardProps {
   trailer: Trailer;
@@ -44,6 +44,14 @@ export function AdminTrailerCard({ trailer, onRevert, onEdit, onDelete }: AdminT
           </p>
         )}
       </div>
+      {trailer.flag_note && (
+        <div
+          title={trailer.flag_note}
+          className="flex items-center px-2.5 border-l border-yard-border shrink-0 bg-danger/10"
+        >
+          <Tag size={15} className="text-danger" />
+        </div>
+      )}
       <div className="flex items-center gap-0.5 px-2 border-l border-yard-border shrink-0">
         {isDeparted && (
           <button
