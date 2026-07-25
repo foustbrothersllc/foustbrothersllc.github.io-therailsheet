@@ -30,6 +30,7 @@ export function ConfirmModal({
       onClose={onCancel}
       title={title}
       compact
+      alwaysCentered
       footer={
         <>
           <Button variant="secondary" onClick={onCancel} className="flex-1">
