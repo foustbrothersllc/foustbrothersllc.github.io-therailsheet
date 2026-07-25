@@ -36,6 +36,7 @@ export function useTrailers() {
         "postgres_changes",
         { event: "*", schema: "public", table: "trailers" },
         (payload) => {
+          console.log("[trailers-realtime] event received:", payload.eventType, payload);
           setTrailers((current) => {
             if (payload.eventType === "INSERT") {
               const row = payload.new as Trailer;
@@ -54,7 +55,9 @@ export function useTrailers() {
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[trailers-realtime] subscription status:", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
