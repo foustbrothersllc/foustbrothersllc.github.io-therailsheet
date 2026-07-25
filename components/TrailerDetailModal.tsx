@@ -111,7 +111,14 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
       <ConfirmModal
         open={confirming}
         title="Confirm"
-        message={`Are you sure you want to take Trailer ${trailer.equipment_number}?`}
+        message={
+          <div className="text-center">
+            <p>You are taking trailer</p>
+            <p className="text-3xl font-stencil font-bold text-amber mt-1.5 tracking-wider">
+              {trailer.equipment_number}
+            </p>
+          </div>
+        }
         onCancel={() => setConfirming(false)}
         onConfirm={handleAccept}
         loading={accepting}
