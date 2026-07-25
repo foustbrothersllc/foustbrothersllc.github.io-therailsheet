@@ -61,8 +61,9 @@ export function FlagTrailerModal({ trailer, onClose }: FlagTrailerModalProps) {
     <Modal
       open={!!trailer}
       onClose={onClose}
-      title="Flag Trailer"
+      title="Redtag Trailer"
       compact
+      alwaysCentered
       footer={
         <>
           {trailer.flag_note && (
@@ -72,11 +73,11 @@ export function FlagTrailerModal({ trailer, onClose }: FlagTrailerModalProps) {
               loading={saving}
               className="flex-1"
             >
-              Clear Flag
+              Clear Redtag
             </Button>
           )}
           <Button variant="danger" onClick={handleSave} loading={saving} className="flex-1">
-            Save Flag
+            Save Redtag
           </Button>
         </>
       }
@@ -90,15 +91,3 @@ export function FlagTrailerModal({ trailer, onClose }: FlagTrailerModalProps) {
             value={note}
             onChange={(e) => setNote(e.target.value.toUpperCase())}
             rows={4}
-            className="w-full px-3.5 py-3 rounded-card bg-yard-bg border border-yard-border focus:border-danger outline-none text-sm resize-none"
-          />
-        </div>
-        {error && (
-          <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2">
-            {error}
-          </p>
-        )}
-      </div>
-    </Modal>
-  );
-}
