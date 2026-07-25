@@ -12,6 +12,8 @@ interface ModalProps {
   footer?: React.ReactNode;
   /** Bottom sheet on mobile, small centered card on desktop instead of the default wide panel */
   compact?: boolean;
+  /** Always render as a centered card, even on mobile (no bottom-sheet behavior) */
+  alwaysCentered?: boolean;
   /** Override the title's text size/weight classes for a specific modal */
   titleClassName?: string;
   /** Extra buttons rendered in the header, to the left of the close button */
@@ -25,6 +27,7 @@ export function Modal({
   children,
   footer,
   compact,
+  alwaysCentered,
   titleClassName,
   headerActions,
 }: ModalProps) {
@@ -42,7 +45,12 @@ export function Modal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex justify-center",
+        alwaysCentered ? "items-center px-4" : "items-end sm:items-center"
+      )}
+    >
       <div
         className="absolute inset-0 bg-black/70 animate-fadeIn"
         onClick={onClose}
@@ -53,9 +61,11 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "relative w-full bg-yard-panel border-t sm:border border-yard-border shadow-panel animate-slideUp sm:animate-fadeIn",
+          "relative w-full bg-yard-panel border-yard-border shadow-panel animate-fadeIn",
           "max-h-[90vh] overflow-y-auto scrollbar-hidden",
-          "rounded-t-2xl sm:rounded-card",
+          alwaysCentered
+            ? "border rounded-card"
+            : "border-t sm:border rounded-t-2xl sm:rounded-card animate-slideUp sm:animate-fadeIn",
           compact ? "sm:max-w-sm" : "sm:max-w-lg"
         )}
       >
