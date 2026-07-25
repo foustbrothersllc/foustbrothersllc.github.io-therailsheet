@@ -12,9 +12,19 @@ interface ModalProps {
   footer?: React.ReactNode;
   /** Bottom sheet on mobile, small centered card on desktop instead of the default wide panel */
   compact?: boolean;
+  /** Override the title's text size/weight classes for a specific modal */
+  titleClassName?: string;
 }
 
-export function Modal({ open, onClose, title, children, footer, compact }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+  compact,
+  titleClassName,
+}: ModalProps) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -47,13 +57,18 @@ export function Modal({ open, onClose, title, children, footer, compact }: Modal
         )}
       >
         <div className="sticky top-0 flex items-center justify-between px-5 py-4 bg-yard-panel border-b border-yard-border">
-          <h2 className="font-display text-lg tracking-wide uppercase text-yard-text">
+          <h2
+            className={cn(
+              "font-display tracking-wide uppercase text-yard-text",
+              titleClassName ?? "text-lg"
+            )}
+          >
             {title}
           </h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-yard-text hover:bg-yard-border"
+            className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-yard-text hover:bg-yard-border shrink-0"
           >
             <X size={20} />
           </button>
