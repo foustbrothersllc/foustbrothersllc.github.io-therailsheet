@@ -101,8 +101,8 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
         headerActions={
           <button
             onClick={() => setFlagging(true)}
-            aria-label="Flag trailer"
-            title="Flag trailer"
+            aria-label="Redtag trailer"
+            title="Redtag trailer"
             className={cn(
               "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
               trailer.flag_note
@@ -127,7 +127,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
         <div className="space-y-3">
           {trailer.flag_note && (
             <div className="bg-danger/10 border border-danger/30 rounded-card px-3 py-2.5">
-              <p className="text-xs uppercase tracking-wide text-danger mb-1">Flagged</p>
+              <p className="text-xs uppercase tracking-wide text-danger mb-1">Redtag</p>
               <p className="text-sm text-yard-text">{trailer.flag_note}</p>
             </div>
           )}
