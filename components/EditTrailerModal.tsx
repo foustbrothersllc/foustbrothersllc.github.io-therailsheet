@@ -32,6 +32,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
   const [flagging, setFlagging] = useState(false);
   const [togglingHot, setTogglingHot] = useState(false);
   const [isHot, setIsHot] = useState(false);
+  const [flagNote, setFlagNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (trailer) {
@@ -45,6 +46,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
         load_percentage: trailer.load_percentage?.toString() ?? "",
       });
       setIsHot(trailer.is_hot);
+      setFlagNote(trailer.flag_note);
       setError(null);
     }
   }, [trailer]);
@@ -138,7 +140,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
               title="Redtag trailer"
               className={cn(
                 "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
-                trailer.flag_note
+                flagNote
                   ? "text-danger bg-danger/15 hover:bg-danger/25"
                   : "text-yard-muted hover:text-danger hover:bg-danger/10"
               )}
@@ -167,10 +169,10 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
               </p>
             </div>
           )}
-          {trailer.flag_note && (
+          {flagNote && (
             <div className="bg-danger/10 border border-danger/30 rounded-card px-3 py-2.5">
               <p className="text-xs uppercase tracking-wide text-danger mb-1">Redtag</p>
-              <p className="text-sm text-yard-text">{trailer.flag_note}</p>
+              <p className="text-sm text-yard-text">{flagNote}</p>
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
@@ -194,7 +196,11 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
         </div>
       </Modal>
 
-      <FlagTrailerModal trailer={flagging ? trailer : null} onClose={() => setFlagging(false)} />
+      <FlagTrailerModal
+        trailer={flagging ? trailer : null}
+        onClose={() => setFlagging(false)}
+        onSaved={setFlagNote}
+      />
     </>
   );
 }
