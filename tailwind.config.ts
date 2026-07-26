@@ -1,10 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: [
-  "./app/**/*.{js,ts,jsx,tsx,mdx}",
-  "./components/**/*.{js,ts,jsx,tsx,mdx}",
-],
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
       colors: {
@@ -33,6 +30,10 @@ const config: Config = {
         okay: {
           DEFAULT: "#3DDC84",
           dim: "#1E6B41",
+        },
+        hot: {
+          DEFAULT: "#FF6B35",
+          dim: "#8A3B1D",
         },
       },
       fontFamily: {
