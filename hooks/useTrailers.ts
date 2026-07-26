@@ -89,9 +89,14 @@ export function useTrailers() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
 
+  // HOT trailers float to the top (sorted among themselves the same way),
+  // everything else follows underneath in the usual numeric-then-A-Z order.
   const atRail = trailers
     .filter((t) => t.status === "at_rail")
-    .sort((a, b) => compareEquipmentNumbers(a.equipment_number, b.equipment_number));
+    .sort((a, b) => {
+      if (a.is_hot !== b.is_hot) return a.is_hot ? -1 : 1;
+      return compareEquipmentNumbers(a.equipment_number, b.equipment_number);
+    });
 
   // Departed list only shows trailers from the last 12 hours (spec: Flow B).
   const departed = trailers
