@@ -2,7 +2,7 @@
 
 import { Trailer } from "@/lib/types";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import { Pencil, RotateCcw, Tag, Trash2, User } from "lucide-react";
+import { Flame, Pencil, RotateCcw, Tag, Trash2, User } from "lucide-react";
 
 interface AdminTrailerCardProps {
   trailer: Trailer;
@@ -44,6 +44,14 @@ export function AdminTrailerCard({ trailer, onRevert, onEdit, onDelete }: AdminT
           </p>
         )}
       </div>
+      {trailer.is_hot && (
+        <div
+          title="HOT — needs to come back ASAP"
+          className="flex items-center px-2.5 border-l border-yard-border shrink-0 bg-hot/10"
+        >
+          <Flame size={15} className="text-hot" />
+        </div>
+      )}
       {trailer.flag_note && (
         <div
           title={trailer.flag_note}
