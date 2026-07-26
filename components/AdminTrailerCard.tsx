@@ -2,7 +2,7 @@
 
 import { Trailer } from "@/lib/types";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import { Flame, Pencil, RotateCcw, Tag, Trash2, User } from "lucide-react";
+import { Flame, Pencil, RotateCcw, Send, Tag, Trash2, User } from "lucide-react";
 
 interface AdminTrailerCardProps {
   trailer: Trailer;
@@ -10,6 +10,7 @@ interface AdminTrailerCardProps {
   onEdit: () => void;
   onFlag: () => void;
   onToggleHot: () => void;
+  onMarkDeparted: () => void;
   onDelete: () => void;
 }
 
@@ -19,6 +20,7 @@ export function AdminTrailerCard({
   onEdit,
   onFlag,
   onToggleHot,
+  onMarkDeparted,
   onDelete,
 }: AdminTrailerCardProps) {
   const isDeparted = trailer.status === "departed";
@@ -80,6 +82,16 @@ export function AdminTrailerCard({
         >
           <Tag size={16} />
         </button>
+        {!isDeparted && (
+          <button
+            onClick={onMarkDeparted}
+            title="Move to Departed"
+            aria-label="Move to Departed"
+            className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-depart hover:bg-depart/10"
+          >
+            <Send size={16} />
+          </button>
+        )}
         {isDeparted && (
           <button
             onClick={onRevert}
