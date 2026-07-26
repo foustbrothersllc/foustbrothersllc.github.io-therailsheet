@@ -8,10 +8,19 @@ interface AdminTrailerCardProps {
   trailer: Trailer;
   onRevert: () => void;
   onEdit: () => void;
+  onFlag: () => void;
+  onToggleHot: () => void;
   onDelete: () => void;
 }
 
-export function AdminTrailerCard({ trailer, onRevert, onEdit, onDelete }: AdminTrailerCardProps) {
+export function AdminTrailerCard({
+  trailer,
+  onRevert,
+  onEdit,
+  onFlag,
+  onToggleHot,
+  onDelete,
+}: AdminTrailerCardProps) {
   const isDeparted = trailer.status === "departed";
 
   const routeLine = [
@@ -44,23 +53,33 @@ export function AdminTrailerCard({ trailer, onRevert, onEdit, onDelete }: AdminT
           </p>
         )}
       </div>
-      {trailer.is_hot && (
-        <div
-          title="HOT — needs to come back ASAP"
-          className="flex items-center px-2.5 border-l border-yard-border shrink-0 bg-hot/10"
-        >
-          <Flame size={15} className="text-hot" />
-        </div>
-      )}
-      {trailer.flag_note && (
-        <div
-          title={trailer.flag_note}
-          className="flex items-center px-2.5 border-l border-yard-border shrink-0 bg-danger/10"
-        >
-          <Tag size={15} className="text-danger" />
-        </div>
-      )}
       <div className="flex items-center gap-0.5 px-2 border-l border-yard-border shrink-0">
+        <button
+          onClick={onToggleHot}
+          title={trailer.is_hot ? "Clear HOT" : "Mark HOT — needs to come back ASAP"}
+          aria-label="Toggle HOT"
+          className={cn(
+            "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
+            trailer.is_hot
+              ? "text-hot bg-hot/15 hover:bg-hot/25"
+              : "text-yard-muted hover:text-hot hover:bg-hot/10"
+          )}
+        >
+          <Flame size={16} />
+        </button>
+        <button
+          onClick={onFlag}
+          title={trailer.flag_note ? `${trailer.flag_note} — tap to edit or clear` : "Redtag trailer"}
+          aria-label="Redtag trailer"
+          className={cn(
+            "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
+            trailer.flag_note
+              ? "text-danger bg-danger/15 hover:bg-danger/25"
+              : "text-yard-muted hover:text-danger hover:bg-danger/10"
+          )}
+        >
+          <Tag size={16} />
+        </button>
         {isDeparted && (
           <button
             onClick={onRevert}
