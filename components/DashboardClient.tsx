@@ -1,6 +1,5 @@
 "use client";
 
-import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 import { NavShield } from "@/components/NavShield";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { TrailerCard } from "@/components/TrailerCard";
@@ -10,7 +9,7 @@ import { usePresence } from "@/hooks/usePresence";
 import { useTrailers } from "@/hooks/useTrailers";
 import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
-import { KeyRound, LogOut, Search } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
 import { useState } from "react";
 
 interface DashboardClientProps {
@@ -25,7 +24,6 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
   const [tab, setTab] = useState<"at_rail" | "departed">("at_rail");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Trailer | null>(null);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   const matches = (t: Trailer) =>
     query.trim() === "" || t.equipment_number.includes(query.trim().toUpperCase());
@@ -72,14 +70,6 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
         </div>
         <div className="flex items-center gap-1">
           {profile.is_admin && <NavShield />}
-          <button
-            onClick={() => setShowPasswordModal(true)}
-            aria-label="Change password"
-            title="Change password"
-            className="h-10 w-10 flex items-center justify-center rounded-full text-yard-muted hover:text-yard-text hover:bg-yard-panel"
-          >
-            <KeyRound size={18} />
-          </button>
           <button
             onClick={signOut}
             aria-label="Sign out"
@@ -156,7 +146,6 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
       </main>
 
       <TrailerDetailModal trailer={selected} profile={profile} onClose={() => setSelected(null)} />
-      <ChangePasswordModal open={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
     </div>
   );
 }
