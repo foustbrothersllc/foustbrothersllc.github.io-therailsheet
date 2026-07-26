@@ -10,6 +10,7 @@ export interface Trailer {
   destination_sort_type: string | null;
   load_percentage: number | null;
   flag_note: string | null;
+  is_hot: boolean;
   assigned_to_id: string | null;
   assigned_driver_name: string | null;
   assigned_driver_emp_id: string | null;
