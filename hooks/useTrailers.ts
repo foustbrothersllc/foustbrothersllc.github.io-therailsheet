@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { Trailer } from "@/lib/types";
+import { compareEquipmentNumbers } from "@/lib/utils";
 import { useCallback, useEffect, useState } from "react";
 
 /**
@@ -67,7 +68,7 @@ export function useTrailers() {
 
   const atRail = trailers
     .filter((t) => t.status === "at_rail")
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    .sort((a, b) => compareEquipmentNumbers(a.equipment_number, b.equipment_number));
 
   // Departed list only shows trailers from the last 12 hours (spec: Flow B).
   const departed = trailers
@@ -76,7 +77,7 @@ export function useTrailers() {
       const hrs = (Date.now() - new Date(t.updated_at).getTime()) / (1000 * 60 * 60);
       return hrs <= 12;
     })
-    .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+    .sort((a, b) => compareEquipmentNumbers(a.equipment_number, b.equipment_number));
 
   return { trailers, atRail, departed, loading, refresh };
 }
