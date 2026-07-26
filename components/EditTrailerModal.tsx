@@ -6,7 +6,7 @@ import { FlagTrailerModal } from "@/components/FlagTrailerModal";
 import { createClient } from "@/lib/supabase/client";
 import { Trailer } from "@/lib/types";
 import { standardizeEquipmentNumber, upper, cn } from "@/lib/utils";
-import { Tag } from "lucide-react";
+import { Flame, Tag } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface EditTrailerModalProps {
@@ -30,6 +30,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [flagging, setFlagging] = useState(false);
+  const [togglingHot, setTogglingHot] = useState(false);
 
   useEffect(() => {
     if (trailer) {
@@ -73,6 +74,16 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
     onClose();
   }
 
+  async function handleToggleHot() {
+    if (!trailer) return;
+    setTogglingHot(true);
+    await supabase
+      .from("trailers")
+      .update({ is_hot: !trailer.is_hot })
+      .eq("id", trailer.id);
+    setTogglingHot(false);
+  }
+
   const field = (key: keyof typeof form, label: string, numeric = false) => (
     <div>
       <label className="block text-xs uppercase tracking-wide text-yard-muted mb-1.5">
@@ -99,19 +110,35 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
         onClose={onClose}
         title="Edit Trailer"
         headerActions={
-          <button
-            onClick={() => setFlagging(true)}
-            aria-label="Redtag trailer"
-            title="Redtag trailer"
-            className={cn(
-              "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
-              trailer.flag_note
-                ? "text-danger bg-danger/15 hover:bg-danger/25"
-                : "text-yard-muted hover:text-danger hover:bg-danger/10"
-            )}
-          >
-            <Tag size={17} />
-          </button>
+          <>
+            <button
+              onClick={handleToggleHot}
+              disabled={togglingHot}
+              aria-label="Mark HOT"
+              title="Mark HOT — needs to come back ASAP"
+              className={cn(
+                "h-9 w-9 flex items-center justify-center rounded-full transition-colors disabled:opacity-50",
+                trailer.is_hot
+                  ? "text-hot bg-hot/15 hover:bg-hot/25"
+                  : "text-yard-muted hover:text-hot hover:bg-hot/10"
+              )}
+            >
+              <Flame size={17} />
+            </button>
+            <button
+              onClick={() => setFlagging(true)}
+              aria-label="Redtag trailer"
+              title="Redtag trailer"
+              className={cn(
+                "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
+                trailer.flag_note
+                  ? "text-danger bg-danger/15 hover:bg-danger/25"
+                  : "text-yard-muted hover:text-danger hover:bg-danger/10"
+              )}
+            >
+              <Tag size={17} />
+            </button>
+          </>
         }
         footer={
           <>
@@ -125,6 +152,14 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
         }
       >
         <div className="space-y-3">
+          {trailer.is_hot && (
+            <div className="bg-hot/10 border border-hot/30 rounded-card px-3 py-2.5 flex items-center gap-2">
+              <Flame size={14} className="text-hot shrink-0" />
+              <p className="text-xs uppercase tracking-wide text-hot font-semibold">
+                Hot — needs to come back ASAP
+              </p>
+            </div>
+          )}
           {trailer.flag_note && (
             <div className="bg-danger/10 border border-danger/30 rounded-card px-3 py-2.5">
               <p className="text-xs uppercase tracking-wide text-danger mb-1">Redtag</p>
