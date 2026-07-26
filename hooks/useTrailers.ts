@@ -3,17 +3,24 @@
 import { createClient } from "@/lib/supabase/client";
 import { Trailer } from "@/lib/types";
 import { compareEquipmentNumbers } from "@/lib/utils";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+const POLL_INTERVAL_MS = 5000;
 
 /**
- * Loads all trailers once, then keeps them in sync in real time via
- * Supabase Realtime (postgres_changes). Every logged-in tab/device sees
- * inserts, updates, and deletes instantly without a manual refresh.
+ * Loads all trailers once, then keeps them in sync via Supabase Realtime
+ * (postgres_changes) AND a background poll every few seconds. The poll is
+ * a safety net: on some networks/devices the realtime WebSocket connects
+ * successfully but silently stops delivering change events, with no error
+ * to detect. Polling guarantees the screen is never more than a few
+ * seconds stale, no matter what the realtime connection is doing.
  */
 export function useTrailers() {
   const supabase = createClient();
   const [trailers, setTrailers] = useState<Trailer[]>([]);
   const [loading, setLoading] = useState(true);
+  const trailersRef = useRef<Trailer[]>([]);
+  trailersRef.current = trailers;
 
   const refresh = useCallback(async () => {
     const { data, error } = await supabase
@@ -31,8 +38,8 @@ export function useTrailers() {
   // Keep the realtime socket's auth in sync with the current session. Access
   // tokens expire roughly every hour; without this, a tab left open a long
   // time keeps its WebSocket connected (so presence still works) but the
-  // server silently stops delivering postgres_changes events because it's
-  // checking permissions against an expired token.
+  // server can stop delivering postgres_changes events tied to an expired
+  // token.
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.access_token) {
@@ -89,8 +96,35 @@ export function useTrailers() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
 
-  // HOT trailers float to the top (sorted among themselves the same way),
-  // everything else follows underneath in the usual numeric-then-A-Z order.
+  // Background safety-net poll. Only applies changes if something actually
+  // differs, so it never causes a visible flicker on a screen that's
+  // already current via realtime.
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const { data, error } = await supabase
+        .from("trailers")
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      if (!error && data) {
+        const next = data as Trailer[];
+        const current = trailersRef.current;
+        const changed =
+          next.length !== current.length ||
+          next.some((row, i) => {
+            const existing = current[i];
+            return !existing || existing.id !== row.id || existing.updated_at !== row.updated_at;
+          });
+        if (changed) {
+          setTrailers(next);
+        }
+      }
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const atRail = trailers
     .filter((t) => t.status === "at_rail")
     .sort((a, b) => {
