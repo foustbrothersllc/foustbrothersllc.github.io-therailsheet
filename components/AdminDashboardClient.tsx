@@ -1,6 +1,6 @@
 "use client";
 
-import { AddTrailerForm } from "@/components/AddTrailerForm";
+import { AddTrailerModal } from "@/components/AddTrailerModal";
 import { AdminTrailerCard } from "@/components/AdminTrailerCard";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { CsvImportModal } from "@/components/CsvImportModal";
@@ -28,7 +28,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
 
   const [editing, setEditing] = useState<Trailer | null>(null);
   const [deleting, setDeleting] = useState<Trailer | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [deletingBusy, setDeletingBusy] = useState(false);
   const [query, setQuery] = useState("");
@@ -94,7 +94,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
         <div className="flex-1 lg:flex-[7] min-h-0 flex flex-col px-6 pt-6 pb-4">
           <div className="flex flex-wrap items-center gap-2 mb-5">
             <button
-              onClick={() => setShowAddForm((v) => !v)}
+              onClick={() => setShowAddModal(true)}
               className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-card bg-yard-panel border border-yard-border text-sm text-yard-text hover:border-yard-borderLight"
             >
               <Plus size={15} /> Add Trailer
@@ -127,12 +127,6 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
               />
             </div>
           </div>
-
-          {showAddForm && (
-            <div className="mb-5 p-4 rounded-card bg-yard-panel border border-yard-border">
-              <AddTrailerForm />
-            </div>
-          )}
 
           <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-6">
             <div className="flex-1 min-h-0 flex flex-col">
@@ -191,6 +185,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
         </div>
       </div>
 
+      <AddTrailerModal open={showAddModal} onClose={() => setShowAddModal(false)} />
       <EditTrailerModal trailer={editing} onClose={() => setEditing(null)} />
       <CsvImportModal open={showImport} onClose={() => setShowImport(false)} />
       <ConfirmModal
