@@ -2,11 +2,9 @@
 
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { FlagTrailerModal } from "@/components/FlagTrailerModal";
 import { createClient } from "@/lib/supabase/client";
 import { Trailer } from "@/lib/types";
-import { standardizeEquipmentNumber, upper, cn } from "@/lib/utils";
-import { Flame, Tag } from "lucide-react";
+import { standardizeEquipmentNumber, upper } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 interface EditTrailerModalProps {
@@ -29,10 +27,6 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [flagging, setFlagging] = useState(false);
-  const [togglingHot, setTogglingHot] = useState(false);
-  const [isHot, setIsHot] = useState(false);
-  const [flagNote, setFlagNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (trailer) {
@@ -45,8 +39,6 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
         destination_sort_type: trailer.destination_sort_type ?? "",
         load_percentage: trailer.load_percentage?.toString() ?? "",
       });
-      setIsHot(trailer.is_hot);
-      setFlagNote(trailer.flag_note);
       setError(null);
     }
   }, [trailer]);
@@ -78,21 +70,6 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
     onClose();
   }
 
-  async function handleToggleHot() {
-    if (!trailer) return;
-    const next = !isHot;
-    setIsHot(next); // update the icon immediately, don't wait on a round trip
-    setTogglingHot(true);
-    const { error } = await supabase
-      .from("trailers")
-      .update({ is_hot: next })
-      .eq("id", trailer.id);
-    setTogglingHot(false);
-    if (error) {
-      setIsHot(!next); // revert if the save actually failed
-    }
-  }
-
   const field = (key: keyof typeof form, label: string, numeric = false) => (
     <div>
       <label className="block text-xs uppercase tracking-wide text-yard-muted mb-1.5">
@@ -113,94 +90,41 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
   );
 
   return (
-    <>
-      <Modal
-        open={!!trailer && !flagging}
-        onClose={onClose}
-        title="Edit Trailer"
-        headerActions={
-          <>
-            <button
-              onClick={handleToggleHot}
-              disabled={togglingHot}
-              aria-label="Mark HOT"
-              title="Mark HOT — needs to come back ASAP"
-              className={cn(
-                "h-9 w-9 flex items-center justify-center rounded-full transition-colors disabled:opacity-50",
-                isHot
-                  ? "text-hot bg-hot/15 hover:bg-hot/25"
-                  : "text-yard-muted hover:text-hot hover:bg-hot/10"
-              )}
-            >
-              <Flame size={17} />
-            </button>
-            <button
-              onClick={() => setFlagging(true)}
-              aria-label="Redtag trailer"
-              title="Redtag trailer"
-              className={cn(
-                "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
-                flagNote
-                  ? "text-danger bg-danger/15 hover:bg-danger/25"
-                  : "text-yard-muted hover:text-danger hover:bg-danger/10"
-              )}
-            >
-              <Tag size={17} />
-            </button>
-          </>
-        }
-        footer={
-          <>
-            <Button variant="secondary" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button onClick={handleSave} loading={saving} className="flex-1">
-              Save Changes
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-3">
-          {isHot && (
-            <div className="bg-hot/10 border border-hot/30 rounded-card px-3 py-2.5 flex items-center gap-2">
-              <Flame size={14} className="text-hot shrink-0" />
-              <p className="text-xs uppercase tracking-wide text-hot font-semibold">
-                Hot — needs to come back ASAP
-              </p>
-            </div>
-          )}
-          {flagNote && (
-            <div className="bg-danger/10 border border-danger/30 rounded-card px-3 py-2.5">
-              <p className="text-xs uppercase tracking-wide text-danger mb-1">Redtag</p>
-              <p className="text-sm text-yard-text">{flagNote}</p>
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            {field("equipment_number", "Equipment Number")}
-            {field("pickup_number", "Pickup #")}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {field("origin", "Origin")}
-            {field("origin_sort_type", "Origin Sort")}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {field("destination", "Destination")}
-            {field("destination_sort_type", "Destination Sort")}
-          </div>
-          {field("load_percentage", "Load %", true)}
-          {error && (
-            <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2">
-              {error}
-            </p>
-          )}
+    <Modal
+      open={!!trailer}
+      onClose={onClose}
+      title="Edit Trailer"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} className="flex-1">
+            Cancel
+          </Button>
+          <Button onClick={handleSave} loading={saving} className="flex-1">
+            Save Changes
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          {field("equipment_number", "Equipment Number")}
+          {field("pickup_number", "Pickup #")}
         </div>
-      </Modal>
-
-      <FlagTrailerModal
-        trailer={flagging ? trailer : null}
-        onClose={() => setFlagging(false)}
-        onSaved={setFlagNote}
-      />
-    </>
+        <div className="grid grid-cols-2 gap-3">
+          {field("origin", "Origin")}
+          {field("origin_sort_type", "Origin Sort")}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {field("destination", "Destination")}
+          {field("destination_sort_type", "Destination Sort")}
+        </div>
+        {field("load_percentage", "Load %", true)}
+        {error && (
+          <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2">
+            {error}
+          </p>
+        )}
+      </div>
+    </Modal>
   );
 }
