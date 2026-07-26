@@ -28,6 +28,32 @@ export function useTrailers() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keep the realtime socket's auth in sync with the current session. Access
+  // tokens expire roughly every hour; without this, a tab left open a long
+  // time keeps its WebSocket connected (so presence still works) but the
+  // server silently stops delivering postgres_changes events because it's
+  // checking permissions against an expired token.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token) {
+        supabase.realtime.setAuth(session.access_token);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.access_token) {
+        supabase.realtime.setAuth(session.access_token);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     refresh();
 
@@ -37,7 +63,6 @@ export function useTrailers() {
         "postgres_changes",
         { event: "*", schema: "public", table: "trailers" },
         (payload) => {
-          console.log("[trailers-realtime] event received:", payload.eventType, payload);
           setTrailers((current) => {
             if (payload.eventType === "INSERT") {
               const row = payload.new as Trailer;
@@ -56,9 +81,7 @@ export function useTrailers() {
           });
         }
       )
-      .subscribe((status) => {
-        console.log("[trailers-realtime] subscription status:", status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
