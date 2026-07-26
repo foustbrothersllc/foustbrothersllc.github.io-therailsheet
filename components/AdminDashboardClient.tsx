@@ -10,8 +10,9 @@ import { UserSidebar } from "@/components/UserSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrailers } from "@/hooks/useTrailers";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
-import { LogOut, Plus, Search, Upload } from "lucide-react";
+import { LogOut, Plus, RefreshCw, Search, Upload } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -31,12 +32,19 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const [showImport, setShowImport] = useState(false);
   const [deletingBusy, setDeletingBusy] = useState(false);
   const [query, setQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const matches = (t: Trailer) =>
     query.trim() === "" || t.equipment_number.includes(query.trim().toUpperCase());
 
   const filteredAtRail = atRail.filter(matches);
   const filteredDeparted = departed.filter(matches);
+
+  async function handleManualRefresh() {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  }
 
   async function handleRevert(trailer: Trailer) {
     await supabase
@@ -96,6 +104,15 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
               className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-card bg-amber text-yard-bg text-sm font-semibold hover:bg-amber/90"
             >
               <Upload size={15} /> Import CSV / Excel
+            </button>
+            <button
+              onClick={handleManualRefresh}
+              title="Refresh yard board"
+              aria-label="Refresh yard board"
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-card bg-yard-panel border border-yard-border text-sm text-yard-text hover:border-yard-borderLight"
+            >
+              <RefreshCw size={15} className={cn(refreshing && "animate-spin")} />
+              Refresh
             </button>
             <div className="relative flex-1 min-w-[180px] max-w-sm ml-auto">
               <Search
