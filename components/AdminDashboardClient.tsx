@@ -2,7 +2,6 @@
 
 import { AddTrailerModal } from "@/components/AddTrailerModal";
 import { AdminTrailerCard } from "@/components/AdminTrailerCard";
-import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { CsvImportModal } from "@/components/CsvImportModal";
 import { EditTrailerModal } from "@/components/EditTrailerModal";
@@ -14,7 +13,7 @@ import { useTrailers } from "@/hooks/useTrailers";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
-import { KeyRound, LogOut, Plus, RefreshCw, Search, Upload } from "lucide-react";
+import { LogOut, Plus, RefreshCw, Search, Upload } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -33,7 +32,6 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const [deleting, setDeleting] = useState<Trailer | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [deletingBusy, setDeletingBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -91,23 +89,13 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
             Admin
           </span>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setShowPasswordModal(true)}
-            aria-label="Change password"
-            title="Change password"
-            className="h-10 w-10 flex items-center justify-center rounded-full text-yard-muted hover:text-yard-text hover:bg-yard-panel"
-          >
-            <KeyRound size={18} />
-          </button>
-          <button
-            onClick={signOut}
-            aria-label="Sign out"
-            className="h-10 w-10 flex items-center justify-center rounded-full text-yard-muted hover:text-yard-text hover:bg-yard-panel"
-          >
-            <LogOut size={18} />
-          </button>
-        </div>
+        <button
+          onClick={signOut}
+          aria-label="Sign out"
+          className="h-10 w-10 flex items-center justify-center rounded-full text-yard-muted hover:text-yard-text hover:bg-yard-panel"
+        >
+          <LogOut size={18} />
+        </button>
       </header>
 
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
@@ -214,7 +202,6 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
       <EditTrailerModal trailer={editing} onClose={() => setEditing(null)} />
       <FlagTrailerModal trailer={flagging} onClose={() => setFlagging(null)} />
       <CsvImportModal open={showImport} onClose={() => setShowImport(false)} />
-      <ChangePasswordModal open={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
       <ConfirmModal
         open={!!deleting}
         title="Delete Trailer"
