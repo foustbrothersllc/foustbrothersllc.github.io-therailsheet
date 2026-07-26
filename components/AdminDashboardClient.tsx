@@ -60,6 +60,19 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
       .eq("id", trailer.id);
   }
 
+  async function handleMarkDeparted(trailer: Trailer) {
+    await supabase
+      .from("trailers")
+      .update({
+        status: "departed",
+        assigned_to_id: null,
+        assigned_driver_name: null,
+        assigned_driver_emp_id: null,
+      })
+      .eq("id", trailer.id)
+      .eq("status", "at_rail"); // guards against a race with a driver accepting at the same moment
+  }
+
   async function handleToggleHot(trailer: Trailer) {
     await supabase
       .from("trailers")
@@ -158,6 +171,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                     onEdit={() => setEditing(t)}
                     onFlag={() => setFlagging(t)}
                     onToggleHot={() => handleToggleHot(t)}
+                    onMarkDeparted={() => handleMarkDeparted(t)}
                     onDelete={() => setDeleting(t)}
                   />
                 ))}
@@ -184,6 +198,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                     onEdit={() => setEditing(t)}
                     onFlag={() => setFlagging(t)}
                     onToggleHot={() => handleToggleHot(t)}
+                    onMarkDeparted={() => handleMarkDeparted(t)}
                     onDelete={() => setDeleting(t)}
                   />
                 ))}
