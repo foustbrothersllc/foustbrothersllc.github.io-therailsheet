@@ -5,6 +5,7 @@ import { AdminTrailerCard } from "@/components/AdminTrailerCard";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { CsvImportModal } from "@/components/CsvImportModal";
 import { EditTrailerModal } from "@/components/EditTrailerModal";
+import { FlagTrailerModal } from "@/components/FlagTrailerModal";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { UserSidebar } from "@/components/UserSidebar";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +28,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const { atRail, departed, refresh } = useTrailers();
 
   const [editing, setEditing] = useState<Trailer | null>(null);
+  const [flagging, setFlagging] = useState<Trailer | null>(null);
   const [deleting, setDeleting] = useState<Trailer | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -55,6 +57,13 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
         assigned_driver_name: null,
         assigned_driver_emp_id: null,
       })
+      .eq("id", trailer.id);
+  }
+
+  async function handleToggleHot(trailer: Trailer) {
+    await supabase
+      .from("trailers")
+      .update({ is_hot: !trailer.is_hot })
       .eq("id", trailer.id);
   }
 
@@ -147,6 +156,8 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                     trailer={t}
                     onRevert={() => handleRevert(t)}
                     onEdit={() => setEditing(t)}
+                    onFlag={() => setFlagging(t)}
+                    onToggleHot={() => handleToggleHot(t)}
                     onDelete={() => setDeleting(t)}
                   />
                 ))}
@@ -171,6 +182,8 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                     trailer={t}
                     onRevert={() => handleRevert(t)}
                     onEdit={() => setEditing(t)}
+                    onFlag={() => setFlagging(t)}
+                    onToggleHot={() => handleToggleHot(t)}
                     onDelete={() => setDeleting(t)}
                   />
                 ))}
@@ -187,6 +200,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
 
       <AddTrailerModal open={showAddModal} onClose={() => setShowAddModal(false)} />
       <EditTrailerModal trailer={editing} onClose={() => setEditing(null)} />
+      <FlagTrailerModal trailer={flagging} onClose={() => setFlagging(null)} />
       <CsvImportModal open={showImport} onClose={() => setShowImport(false)} />
       <ConfirmModal
         open={!!deleting}
