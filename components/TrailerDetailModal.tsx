@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { Profile, Trailer } from "@/lib/types";
-import { Tag } from "lucide-react";
+import { Flame, Tag } from "lucide-react";
 import { useState } from "react";
 
 interface TrailerDetailModalProps {
@@ -76,6 +76,14 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
         }
       >
         <div>
+          {trailer.is_hot && (
+            <div className="bg-hot/10 border border-hot/30 rounded-card px-3 py-2.5 mb-3 flex items-center gap-2">
+              <Flame size={14} className="text-hot shrink-0" />
+              <p className="text-xs uppercase tracking-wide text-hot font-semibold">
+                Hot — needs to come back ASAP
+              </p>
+            </div>
+          )}
           {trailer.flag_note && (
             <div className="bg-danger/10 border border-danger/30 rounded-card px-3 py-2.5 mb-4">
               <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-danger mb-1">
