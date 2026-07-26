@@ -9,9 +9,10 @@ import { useEffect, useState } from "react";
 interface FlagTrailerModalProps {
   trailer: Trailer | null;
   onClose: () => void;
+  onSaved?: (note: string | null) => void;
 }
 
-export function FlagTrailerModal({ trailer, onClose }: FlagTrailerModalProps) {
+export function FlagTrailerModal({ trailer, onClose, onSaved }: FlagTrailerModalProps) {
   const supabase = createClient();
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
@@ -29,15 +30,17 @@ export function FlagTrailerModal({ trailer, onClose }: FlagTrailerModalProps) {
   async function handleSave() {
     setSaving(true);
     setError(null);
+    const trimmed = note.trim() || null;
     const { error } = await supabase
       .from("trailers")
-      .update({ flag_note: note.trim() || null })
+      .update({ flag_note: trimmed })
       .eq("id", trailer!.id);
     setSaving(false);
     if (error) {
       setError(error.message);
       return;
     }
+    onSaved?.(trimmed);
     onClose();
   }
 
@@ -54,6 +57,7 @@ export function FlagTrailerModal({ trailer, onClose }: FlagTrailerModalProps) {
       return;
     }
     setNote("");
+    onSaved?.(null);
     onClose();
   }
 
