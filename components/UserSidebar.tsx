@@ -17,6 +17,7 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
   const supabase = createClient();
   const [users, setUsers] = useState<Profile[]>([]);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
+  const [showAll, setShowAll] = useState(false);
   const onlineIds = usePresence(currentProfile);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
 
   const pending = users.filter((u) => !u.is_approved);
   const active = users.filter((u) => u.is_approved);
+  const visibleActive = showAll ? active : active.filter((u) => onlineIds.has(u.id));
 
   async function approve(id: string, asAdmin: boolean) {
     await supabase
@@ -110,11 +112,24 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
         )}
 
         <div>
-          <p className="text-xs uppercase tracking-wide text-yard-faint px-1 mb-2">
-            Roster ({active.length})
-          </p>
+          <div className="flex items-center justify-between px-1 mb-2">
+            <p className="text-xs uppercase tracking-wide text-yard-faint">
+              {showAll ? `Roster (${active.length})` : `Active Now (${visibleActive.length})`}
+            </p>
+            <button
+              onClick={() => setShowAll((v) => !v)}
+              className="text-[11px] font-semibold uppercase tracking-wide text-amber hover:underline"
+            >
+              {showAll ? "Show Active Only" : "Show All"}
+            </button>
+          </div>
           <div className="space-y-1.5">
-            {active.map((u) => {
+            {visibleActive.length === 0 && (
+              <p className="text-sm text-yard-faint px-1 py-6 text-center">
+                {showAll ? "No users yet." : "No one's active right now."}
+              </p>
+            )}
+            {visibleActive.map((u) => {
               const isOnline = onlineIds.has(u.id);
               const isProtected = u.email.toLowerCase() === PROTECTED_EMAIL;
               return (
