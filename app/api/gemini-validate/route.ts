@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 import { RawImportRow, ParsedTrailerRow } from "@/lib/types";
 
@@ -73,14 +73,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      generationConfig: { responseMimeType: "application/json" },
+    const ai = new GoogleGenAI({ apiKey });
+
+    const result = await ai.models.generateContent({
+      model: "gemini-3.5-flash-lite",
+      contents: buildPrompt(rows),
+      config: { responseMimeType: "application/json" },
     });
 
-    const result = await model.generateContent(buildPrompt(rows));
-    const text = result.response.text();
+    const text =
+      result.text ??
+      result.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ??
+      "";
 
     let parsed: ParsedTrailerRow[];
     try {
