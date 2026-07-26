@@ -15,7 +15,11 @@ const empty = {
   load_percentage: "",
 };
 
-export function AddTrailerForm() {
+interface AddTrailerFormProps {
+  onSaved?: () => void;
+}
+
+export function AddTrailerForm({ onSaved }: AddTrailerFormProps) {
   const supabase = createClient();
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
@@ -44,6 +48,7 @@ export function AddTrailerForm() {
       return;
     }
     setForm(empty);
+    onSaved?.();
   }
 
   const field = (
