@@ -31,6 +31,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [flagging, setFlagging] = useState(false);
   const [togglingHot, setTogglingHot] = useState(false);
+  const [isHot, setIsHot] = useState(false);
 
   useEffect(() => {
     if (trailer) {
@@ -43,6 +44,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
         destination_sort_type: trailer.destination_sort_type ?? "",
         load_percentage: trailer.load_percentage?.toString() ?? "",
       });
+      setIsHot(trailer.is_hot);
       setError(null);
     }
   }, [trailer]);
@@ -76,12 +78,17 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
 
   async function handleToggleHot() {
     if (!trailer) return;
+    const next = !isHot;
+    setIsHot(next); // update the icon immediately, don't wait on a round trip
     setTogglingHot(true);
-    await supabase
+    const { error } = await supabase
       .from("trailers")
-      .update({ is_hot: !trailer.is_hot })
+      .update({ is_hot: next })
       .eq("id", trailer.id);
     setTogglingHot(false);
+    if (error) {
+      setIsHot(!next); // revert if the save actually failed
+    }
   }
 
   const field = (key: keyof typeof form, label: string, numeric = false) => (
@@ -118,7 +125,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
               title="Mark HOT — needs to come back ASAP"
               className={cn(
                 "h-9 w-9 flex items-center justify-center rounded-full transition-colors disabled:opacity-50",
-                trailer.is_hot
+                isHot
                   ? "text-hot bg-hot/15 hover:bg-hot/25"
                   : "text-yard-muted hover:text-hot hover:bg-hot/10"
               )}
@@ -152,7 +159,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
         }
       >
         <div className="space-y-3">
-          {trailer.is_hot && (
+          {isHot && (
             <div className="bg-hot/10 border border-hot/30 rounded-card px-3 py-2.5 flex items-center gap-2">
               <Flame size={14} className="text-hot shrink-0" />
               <p className="text-xs uppercase tracking-wide text-hot font-semibold">
