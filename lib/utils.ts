@@ -12,6 +12,16 @@ export function upper(value: string): string {
   return value.toUpperCase();
 }
 
+/** Sorts equipment numbers: pure-numeric ones first (numerically), then alphanumeric (A-Z) */
+export function compareEquipmentNumbers(a: string, b: string): number {
+  const aNumeric = /^[0-9]+$/.test(a);
+  const bNumeric = /^[0-9]+$/.test(b);
+  if (aNumeric && bNumeric) return Number(a) - Number(b);
+  if (aNumeric && !bNumeric) return -1;
+  if (!aNumeric && bNumeric) return 1;
+  return a.localeCompare(b);
+}
+
 export function hoursSince(isoTimestamp: string): number {
   const then = new Date(isoTimestamp).getTime();
   const now = Date.now();
