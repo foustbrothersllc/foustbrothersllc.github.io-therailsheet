@@ -5,7 +5,7 @@ import { Trailer } from "@/lib/types";
 import { compareEquipmentNumbers } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const POLL_INTERVAL_MS = 1000;
+const POLL_INTERVAL_MS = 30000;
 
 /**
  * Loads all trailers once, then keeps them in sync via Supabase Realtime
