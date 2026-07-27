@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Profile, Trailer } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Flame, Tag } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface TrailerDetailModalProps {
   trailer: Trailer | null;
@@ -31,6 +31,13 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
   const [accepting, setAccepting] = useState(false);
   const [flagging, setFlagging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [flagNote, setFlagNote] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (trailer) {
+      setFlagNote(trailer.flag_note);
+    }
+  }, [trailer]);
 
   if (!trailer) return null;
 
@@ -74,10 +81,10 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
           <button
             onClick={() => setFlagging(true)}
             aria-label="Redtag trailer"
-            title={trailer.flag_note ? "View or update Redtag" : "Redtag trailer"}
+            title={flagNote ? "View or update Redtag" : "Redtag trailer"}
             className={cn(
               "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
-              trailer.flag_note
+              flagNote
                 ? "text-danger bg-danger/15 hover:bg-danger/25"
                 : "text-yard-muted hover:text-danger hover:bg-danger/10"
             )}
@@ -102,13 +109,13 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
               </p>
             </div>
           )}
-          {trailer.flag_note && (
+          {flagNote && (
             <div className="bg-danger/10 border border-danger/30 rounded-card px-3 py-2.5 mb-4">
               <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-danger mb-1">
                 <Tag size={12} />
                 Redtag
               </p>
-              <p className="text-sm text-yard-text">{trailer.flag_note}</p>
+              <p className="text-sm text-yard-text">{flagNote}</p>
             </div>
           )}
           <DetailRow label="Pickup #" value={trailer.pickup_number} />
@@ -137,6 +144,7 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
       <FlagTrailerModal
         trailer={flagging ? trailer : null}
         onClose={() => setFlagging(false)}
+        onSaved={setFlagNote}
         allowClear={profile.is_admin}
       />
 
