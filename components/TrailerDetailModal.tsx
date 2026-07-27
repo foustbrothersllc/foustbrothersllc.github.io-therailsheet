@@ -1,10 +1,12 @@
 "use client";
 
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { FlagTrailerModal } from "@/components/FlagTrailerModal";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { Profile, Trailer } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { Flame, Tag } from "lucide-react";
 import { useState } from "react";
 
@@ -27,6 +29,7 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
   const supabase = createClient();
   const [confirming, setConfirming] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const [flagging, setFlagging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!trailer) return null;
@@ -63,10 +66,25 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
   return (
     <>
       <Modal
-        open={!!trailer && !confirming}
+        open={!!trailer && !confirming && !flagging}
         onClose={onClose}
         title={trailer.equipment_number}
         titleClassName="text-4xl"
+        headerActions={
+          <button
+            onClick={() => setFlagging(true)}
+            aria-label="Redtag trailer"
+            title={trailer.flag_note ? "View or update Redtag" : "Redtag trailer"}
+            className={cn(
+              "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
+              trailer.flag_note
+                ? "text-danger bg-danger/15 hover:bg-danger/25"
+                : "text-yard-muted hover:text-danger hover:bg-danger/10"
+            )}
+          >
+            <Tag size={17} />
+          </button>
+        }
         footer={
           canAccept ? (
             <Button className="w-full" onClick={() => setConfirming(true)}>
@@ -115,6 +133,12 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
           </p>
         )}
       </Modal>
+
+      <FlagTrailerModal
+        trailer={flagging ? trailer : null}
+        onClose={() => setFlagging(false)}
+        allowClear={profile.is_admin}
+      />
 
       <ConfirmModal
         open={confirming}
