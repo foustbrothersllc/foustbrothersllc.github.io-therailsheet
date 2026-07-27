@@ -5,15 +5,16 @@ import { Trailer } from "@/lib/types";
 import { compareEquipmentNumbers } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+const POLL_ENABLED = false; // flip to true to re-enable the background safety-net poll
 const POLL_INTERVAL_MS = 30000;
 
 /**
  * Loads all trailers once, then keeps them in sync via Supabase Realtime
- * (postgres_changes) AND a background poll every few seconds. The poll is
- * a safety net: on some networks/devices the realtime WebSocket connects
- * successfully but silently stops delivering change events, with no error
- * to detect. Polling guarantees the screen is never more than a few
- * seconds stale, no matter what the realtime connection is doing.
+ * (postgres_changes) and, optionally, a background poll every few seconds.
+ * The poll is a safety net for devices where the realtime WebSocket
+ * connects but silently stops delivering events. Currently disabled to
+ * conserve Supabase egress while realtime is working fine for everyone
+ * except one known device.
  */
 export function useTrailers() {
   const supabase = createClient();
@@ -96,10 +97,12 @@ export function useTrailers() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
 
-  // Background safety-net poll. Only applies changes if something actually
-  // differs, so it never causes a visible flicker on a screen that's
-  // already current via realtime.
+  // Background safety-net poll (optional). Only applies changes if
+  // something actually differs, so it never causes a visible flicker on a
+  // screen that's already current via realtime.
   useEffect(() => {
+    if (!POLL_ENABLED) return;
+
     const interval = setInterval(async () => {
       const { data, error } = await supabase
         .from("trailers")
