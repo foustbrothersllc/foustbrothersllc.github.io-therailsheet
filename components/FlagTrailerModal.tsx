@@ -10,9 +10,15 @@ interface FlagTrailerModalProps {
   trailer: Trailer | null;
   onClose: () => void;
   onSaved?: (note: string | null) => void;
+  allowClear?: boolean;
 }
 
-export function FlagTrailerModal({ trailer, onClose, onSaved }: FlagTrailerModalProps) {
+export function FlagTrailerModal({
+  trailer,
+  onClose,
+  onSaved,
+  allowClear = true,
+}: FlagTrailerModalProps) {
   const supabase = createClient();
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
@@ -70,7 +76,7 @@ export function FlagTrailerModal({ trailer, onClose, onSaved }: FlagTrailerModal
       alwaysCentered
       footer={
         <>
-          {trailer.flag_note && (
+          {trailer.flag_note && allowClear && (
             <Button variant="secondary" onClick={handleClear} loading={saving} className="flex-1">
               Clear Redtag
             </Button>
