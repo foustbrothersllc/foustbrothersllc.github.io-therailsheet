@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
-import { parseSheetRows } from "@/lib/importParser";
+import { parseSheetRows, recomputeIssues } from "@/lib/importParser";
 import { ParsedTrailerRow } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, CheckCircle2, UploadCloud } from "lucide-react";
@@ -71,22 +71,24 @@ export function CsvImportModal({ open, onClose }: CsvImportModalProps) {
   }
 
   function updateRow(rowIndex: number, patch: Partial<ParsedTrailerRow>) {
-    setRows((current) =>
-      current.map((r) => {
-        if (r.row_index !== rowIndex) return r;
-        const updated = { ...r, ...patch };
-        const stillMissing: string[] = [];
-        if (!updated.equipment_number) stillMissing.push("Missing equipment number");
-        if (!updated.pickup_number) stillMissing.push("Missing pickup number");
-        return { ...updated, issues: stillMissing };
-      })
-    );
+    setRows((current) => {
+      const updated = current.map((r) =>
+        r.row_index === rowIndex ? { ...r, ...patch } : r
+      );
+      return recomputeIssues(updated);
+    });
   }
 
   async function handleImport() {
     setStage("importing");
     const cleanRows = rows.filter((r) => r.issues.length === 0);
 
+    // Deliberately omit status/assignment/flag/hot fields here. On INSERT
+    // (brand-new equipment number) they fall back to the table's defaults
+    // (status = 'at_rail', everything else null/false) — exactly right for
+    // a new trailer. On UPDATE (equipment number already exists), leaving
+    // them out means they're never touched, so re-importing the same file
+    // never bounces an already-Departed trailer back to At Rail.
     const payload = cleanRows.map((r) => ({
       equipment_number: r.equipment_number!,
       pickup_number: r.pickup_number!,
@@ -95,7 +97,6 @@ export function CsvImportModal({ open, onClose }: CsvImportModalProps) {
       destination: r.destination || null,
       destination_sort_type: r.destination_sort_type || null,
       load_percentage: r.load_percentage,
-      status: "at_rail" as const,
     }));
 
     const { error } = await supabase
@@ -211,55 +212,3 @@ export function CsvImportModal({ open, onClose }: CsvImportModalProps) {
             <div>
               <p className="text-xs uppercase tracking-wide text-okay mb-2">
                 Ready to Import
-              </p>
-              <div className="max-h-40 overflow-y-auto scrollbar-hidden space-y-1">
-                {validRows.map((r) => (
-                  <div
-                    key={r.row_index}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-md bg-okay/5"
-                  >
-                    <span className="font-stencil font-semibold">{r.equipment_number}</span>
-                    <span className="text-yard-faint">{r.destination}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {error && (
-            <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2">
-              {error}
-            </p>
-          )}
-
-          <Button
-            className="w-full"
-            disabled={validRows.length === 0}
-            onClick={handleImport}
-          >
-            Fix &amp; Import ({validRows.length})
-          </Button>
-        </div>
-      )}
-
-      {stage === "importing" && (
-        <div className="py-12 text-center">
-          <div className="h-8 w-8 mx-auto rounded-full border-2 border-amber border-t-transparent animate-spin mb-4" />
-          <p className="text-sm text-yard-muted">Writing to the yard board…</p>
-        </div>
-      )}
-
-      {stage === "done" && (
-        <div className="py-10 text-center space-y-4">
-          <CheckCircle2 size={32} className="mx-auto text-okay" />
-          <p className="text-sm text-yard-text">
-            Imported {importedCount} trailer{importedCount === 1 ? "" : "s"}.
-          </p>
-          <Button onClick={handleClose} className="w-full">
-            Done
-          </Button>
-        </div>
-      )}
-    </Modal>
-  );
-}
