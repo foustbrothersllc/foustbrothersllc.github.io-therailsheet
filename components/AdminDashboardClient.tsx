@@ -9,6 +9,7 @@ import { FlagTrailerModal } from "@/components/FlagTrailerModal";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { UserSidebar } from "@/components/UserSidebar";
 import { useAuth } from "@/hooks/useAuth";
+import { useAutoReloadOnNewDeploy } from "@/hooks/useAutoReloadOnNewDeploy";
 import { useTrailers } from "@/hooks/useTrailers";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const supabase = createClient();
   const { profile: liveProfile, signOut } = useAuth();
   const profile = liveProfile ?? initialProfile;
+  useAutoReloadOnNewDeploy(); // self-heal if this tab is left open across a deploy
   const { atRail, departed, refresh } = useTrailers();
 
   const [editing, setEditing] = useState<Trailer | null>(null);
@@ -70,7 +72,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
         assigned_driver_emp_id: null,
       })
       .eq("id", trailer.id)
-      .eq("status", "at_rail"); // guards against a race with a driver accepting at the same moment
+      .eq("status", "at_rail");
   }
 
   async function handleToggleHot(trailer: Trailer) {
