@@ -78,10 +78,10 @@ function cleanLoadPercentage(value: unknown): number | null {
 }
 
 /**
- * Some real-world export reports (this one included) have title/blank rows
- * before the actual header row. Scan the first several rows and pick the
- * one whose cells best match our known field-header vocabulary, instead of
- * always assuming row 0 is the header.
+ * Some real-world export reports have title/blank rows before the actual
+ * header row. Scan the first several rows and pick the one whose cells
+ * best match our known field-header vocabulary, instead of always
+ * assuming row 0 is the header.
  */
 function findHeaderRowIndex(rows: unknown[][]): number {
   let bestIndex = 0;
@@ -91,9 +91,9 @@ function findHeaderRowIndex(rows: unknown[][]): number {
   for (let i = 0; i < scanLimit; i++) {
     const row = rows[i] ?? [];
     const score = row.reduce(
-  (acc: number, cell) => acc + (ALL_ALIASES.has(normalizeHeader(cell)) ? 1 : 0),
-  0
-);
+      (acc: number, cell) => acc + (ALL_ALIASES.has(normalizeHeader(cell)) ? 1 : 0),
+      0
+    );
     if (score > bestScore) {
       bestScore = score;
       bestIndex = i;
@@ -130,6 +130,28 @@ function buildColumnMapping(headers: string[]): Partial<Record<Field, string>> {
   return mapping;
 }
 
+/** Re-checks required fields AND duplicate equipment numbers across the
+ * whole set — call this after any edit too, since fixing one row's
+ * equipment number can resolve (or create) a duplicate with another row. */
+export function recomputeIssues(rows: ParsedTrailerRow[]): ParsedTrailerRow[] {
+  const counts = new Map<string, number>();
+  rows.forEach((r) => {
+    if (r.equipment_number) {
+      counts.set(r.equipment_number, (counts.get(r.equipment_number) ?? 0) + 1);
+    }
+  });
+
+  return rows.map((r) => {
+    const issues: string[] = [];
+    if (!r.equipment_number) issues.push("Missing equipment number");
+    if (!r.pickup_number) issues.push("Missing pickup number");
+    if (r.equipment_number && (counts.get(r.equipment_number) ?? 0) > 1) {
+      issues.push("Duplicate equipment number in this file");
+    }
+    return { ...r, issues };
+  });
+}
+
 /**
  * Takes a sheet already parsed as an array-of-arrays (XLSX's `header: 1`
  * mode, or a CSV split into raw rows) and turns it into cleaned trailer
@@ -164,7 +186,7 @@ export function parseSheetRows(rawRows: unknown[][]): ParsedTrailerRow[] {
     }
   }
 
-  return dataRows.map((row, i) => {
+  const parsed = dataRows.map((row, i) => {
     const get = (field: Field) => {
       const header = mapping[field];
       if (!header) return null;
@@ -172,28 +194,18 @@ export function parseSheetRows(rawRows: unknown[][]): ParsedTrailerRow[] {
       return colIndex >= 0 ? row[colIndex] : null;
     };
 
-    const equipment_number = cleanEquipmentNumber(get("equipment_number"));
-    const pickup_number = cleanText(get("pickup_number"));
-    const origin = cleanText(get("origin"));
-    const origin_sort_type = cleanText(get("origin_sort_type"));
-    const destination = cleanText(get("destination"));
-    const destination_sort_type = cleanText(get("destination_sort_type"));
-    const load_percentage = cleanLoadPercentage(get("load_percentage"));
-
-    const issues: string[] = [];
-    if (!equipment_number) issues.push("Missing equipment number");
-    if (!pickup_number) issues.push("Missing pickup number");
-
     return {
       row_index: i,
-      equipment_number,
-      pickup_number,
-      origin,
-      origin_sort_type,
-      destination,
-      destination_sort_type,
-      load_percentage,
-      issues,
+      equipment_number: cleanEquipmentNumber(get("equipment_number")),
+      pickup_number: cleanText(get("pickup_number")),
+      origin: cleanText(get("origin")),
+      origin_sort_type: cleanText(get("origin_sort_type")),
+      destination: cleanText(get("destination")),
+      destination_sort_type: cleanText(get("destination_sort_type")),
+      load_percentage: cleanLoadPercentage(get("load_percentage")),
+      issues: [] as string[],
     };
   });
+
+  return recomputeIssues(parsed);
 }
