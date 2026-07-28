@@ -5,6 +5,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { TrailerCard } from "@/components/TrailerCard";
 import { TrailerDetailModal } from "@/components/TrailerDetailModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useAutoReloadOnNewDeploy } from "@/hooks/useAutoReloadOnNewDeploy";
 import { usePresence } from "@/hooks/usePresence";
 import { useTrailers } from "@/hooks/useTrailers";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
   const { profile: liveProfile, signOut } = useAuth();
   const profile = liveProfile ?? initialProfile;
   usePresence(profile); // joins the shared presence channel so admins see this driver as active
+  useAutoReloadOnNewDeploy(); // self-heal if this tab is left open across a deploy
   const { atRail, departed, loading, refresh } = useTrailers();
   const [tab, setTab] = useState<"at_rail" | "departed">("at_rail");
   const [query, setQuery] = useState("");
