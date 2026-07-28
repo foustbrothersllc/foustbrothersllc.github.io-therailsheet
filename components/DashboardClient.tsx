@@ -98,6 +98,7 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            inputMode="numeric"
             placeholder="Search equipment number"
             className="w-full h-11 pl-9 pr-3 rounded-card bg-yard-panel border border-yard-border text-sm outline-none focus:border-amber"
           />
@@ -114,6 +115,7 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            inputMode="numeric"
             placeholder="Search equipment number"
             className="w-full h-11 pl-9 pr-3 rounded-card bg-yard-panel border border-yard-border text-sm outline-none focus:border-amber"
           />
