@@ -91,9 +91,9 @@ function findHeaderRowIndex(rows: unknown[][]): number {
   for (let i = 0; i < scanLimit; i++) {
     const row = rows[i] ?? [];
     const score = row.reduce(
-      (acc, cell) => acc + (ALL_ALIASES.has(normalizeHeader(cell)) ? 1 : 0),
-      0
-    );
+  (acc: number, cell) => acc + (ALL_ALIASES.has(normalizeHeader(cell)) ? 1 : 0),
+  0
+);
     if (score > bestScore) {
       bestScore = score;
       bestIndex = i;
