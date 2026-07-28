@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
+import { parseImportRows } from "@/lib/importParser";
 import { ParsedTrailerRow, RawImportRow } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, CheckCircle2, UploadCloud } from "lucide-react";
@@ -14,7 +15,7 @@ interface CsvImportModalProps {
   onClose: () => void;
 }
 
-type Stage = "upload" | "validating" | "review" | "importing" | "done";
+type Stage = "upload" | "review" | "importing" | "done";
 
 export function CsvImportModal({ open, onClose }: CsvImportModalProps) {
   const supabase = createClient();
@@ -39,7 +40,6 @@ export function CsvImportModal({ open, onClose }: CsvImportModalProps) {
 
   async function handleFile(file: File) {
     setError(null);
-    setStage("validating");
 
     try {
       const buffer = await file.arrayBuffer();
@@ -49,29 +49,15 @@ export function CsvImportModal({ open, onClose }: CsvImportModalProps) {
 
       if (raw.length === 0) {
         setError("That file doesn't have any rows in it.");
-        setStage("upload");
         return;
       }
 
-      const res = await fetch("/api/gemini-validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: raw }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Validation failed.");
-        setStage("upload");
-        return;
-      }
-
-      setRows(data.rows);
+      const parsed = parseImportRows(raw);
+      setRows(parsed);
       setStage("review");
     } catch (err) {
       console.error(err);
       setError("Couldn't read that file. Make sure it's a .csv or .xlsx.");
-      setStage("upload");
     }
   }
 
@@ -155,15 +141,11 @@ export function CsvImportModal({ open, onClose }: CsvImportModalProps) {
               if (file) handleFile(file);
             }}
           />
-        </div>
-      )}
-
-      {stage === "validating" && (
-        <div className="py-12 text-center">
-          <div className="h-8 w-8 mx-auto rounded-full border-2 border-amber border-t-transparent animate-spin mb-4" />
-          <p className="text-sm text-yard-muted">
-            Gemini is mapping columns and checking for problems…
-          </p>
+          {error && (
+            <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2 mx-6">
+              {error}
+            </p>
+          )}
         </div>
       )}
 
