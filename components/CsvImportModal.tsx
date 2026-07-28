@@ -3,8 +3,8 @@
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
-import { parseImportRows } from "@/lib/importParser";
-import { ParsedTrailerRow, RawImportRow } from "@/lib/types";
+import { parseSheetRows } from "@/lib/importParser";
+import { ParsedTrailerRow } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, CheckCircle2, UploadCloud } from "lucide-react";
 import { useRef, useState } from "react";
@@ -45,14 +45,23 @@ export function CsvImportModal({ open, onClose }: CsvImportModalProps) {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: "array" });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const raw: RawImportRow[] = XLSX.utils.sheet_to_json(firstSheet, { defval: null });
+      const raw: unknown[][] = XLSX.utils.sheet_to_json(firstSheet, {
+        header: 1,
+        defval: null,
+        raw: true,
+      });
 
       if (raw.length === 0) {
         setError("That file doesn't have any rows in it.");
         return;
       }
 
-      const parsed = parseImportRows(raw);
+      const parsed = parseSheetRows(raw);
+      if (parsed.length === 0) {
+        setError("Couldn't find any data rows in that file.");
+        return;
+      }
+
       setRows(parsed);
       setStage("review");
     } catch (err) {
