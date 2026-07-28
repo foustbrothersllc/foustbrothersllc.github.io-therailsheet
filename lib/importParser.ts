@@ -14,6 +14,7 @@ const ALIASES: Record<Field, string[]> = {
     "equipment number", "equipment #", "equipment#", "equipment",
     "trailer", "trailer #", "trailer#", "trailer number",
     "unit", "unit #", "unit#", "container", "rental", "upi", "equip", "equip #", "equip#",
+    "uld", "uld #", "uld#", "uld number",
   ],
   pickup_number: [
     "pickup number", "pickup #", "pickup#", "pickup",
