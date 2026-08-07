@@ -10,6 +10,7 @@ export interface Trailer {
   destination_sort_type: string | null;
   load_percentage: number | null;
   flag_note: string | null;
+  flag_created_by: string | null;
   is_hot: boolean;
   assigned_to_id: string | null;
   assigned_driver_name: string | null;
@@ -47,7 +48,7 @@ export interface SignupProblem {
   created_at: string;
 }
 
-// Row shape coming out of an uploaded CSV/XLSX before Gemini normalizes it.
+// Row shape coming out of an uploaded CSV/XLSX before it's cleaned and mapped.
 export type RawImportRow = Record<string, string | number | null>;
 
 export interface ParsedTrailerRow {
