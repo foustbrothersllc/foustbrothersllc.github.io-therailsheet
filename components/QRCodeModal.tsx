@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Trailer } from "@/lib/types";
-import { Download } from "lucide-react";
 import { useRef } from "react";
 
 interface QRCodeModalProps {
@@ -16,7 +15,7 @@ export function QRCodeModal({ trailer, onClose }: QRCodeModalProps) {
 
   if (!trailer) return null;
 
-  // Build URL with trailer number and load percentage if available
+  // Build URL with all trailer data
   let qrValue = `${typeof window !== "undefined" ? window.location.origin : ""}/qr-entry?trailer=${encodeURIComponent(
     trailer.equipment_number
   )}`;
@@ -26,16 +25,17 @@ export function QRCodeModal({ trailer, onClose }: QRCodeModalProps) {
     qrValue += `&load=${trailer.load_percentage}`;
   }
 
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrValue)}`;
+  // Add origin if it exists
+  if (trailer.origin) {
+    qrValue += `&origin=${encodeURIComponent(trailer.origin)}`;
+  }
 
-  const downloadQR = () => {
-    if (imgRef.current) {
-      const link = document.createElement("a");
-      link.download = `${trailer.equipment_number}-qr.png`;
-      link.href = qrImageUrl;
-      link.click();
-    }
-  };
+  // Add destination if it exists
+  if (trailer.destination) {
+    qrValue += `&destination=${encodeURIComponent(trailer.destination)}`;
+  }
+
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrValue)}`;
 
   return (
     <Modal
@@ -45,15 +45,9 @@ export function QRCodeModal({ trailer, onClose }: QRCodeModalProps) {
       compact
       alwaysCentered
       footer={
-        <>
-          <Button variant="secondary" onClick={onClose} className="flex-1">
-            Close
-          </Button>
-          <Button onClick={downloadQR} className="flex-1">
-            <Download size={16} />
-            Download
-          </Button>
-        </>
+        <Button onClick={onClose} className="w-full">
+          Close
+        </Button>
       }
     >
       <div className="flex flex-col items-center gap-4">
@@ -74,13 +68,23 @@ export function QRCodeModal({ trailer, onClose }: QRCodeModalProps) {
             {trailer.equipment_number}
           </p>
           {trailer.load_percentage !== null && (
-            <p className="text-xs text-yard-faint mt-2">
+            <p className="text-xs text-yard-faint mt-1">
               Load: {trailer.load_percentage}%
+            </p>
+          )}
+          {trailer.origin && (
+            <p className="text-xs text-yard-faint">
+              Origin: {trailer.origin}
+            </p>
+          )}
+          {trailer.destination && (
+            <p className="text-xs text-yard-faint">
+              Destination: {trailer.destination}
             </p>
           )}
         </div>
         <p className="text-xs text-yard-faint text-center">
-          Drivers can scan this QR code with their device to quickly input destination and load information
+          Drivers can scan this QR code with their device to quickly input remaining information
         </p>
       </div>
     </Modal>
