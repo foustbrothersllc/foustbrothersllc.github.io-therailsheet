@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { usePresence } from "@/hooks/usePresence";
 import { Profile } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface UserSidebarProps {
   currentProfile: Profile;
@@ -19,6 +19,8 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [showAll, setShowAll] = useState(false);
   const onlineIds = usePresence(currentProfile);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastDataRef = useRef<string>("");
 
   useEffect(() => {
     let mounted = true;
@@ -29,7 +31,15 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
         .select("*")
         .order("is_approved", { ascending: true })
         .order("created_at", { ascending: false });
-      if (mounted && data) setUsers(data as Profile[]);
+      
+      if (mounted && data) {
+        // Only update if data actually changed
+        const dataString = JSON.stringify(data);
+        if (dataString !== lastDataRef.current) {
+          lastDataRef.current = dataString;
+          setUsers(data as Profile[]);
+        }
+      }
     }
 
     load();
@@ -39,12 +49,24 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles" },
-        () => load()
+        () => {
+          // Debounce - wait 300ms before reloading
+          if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+          }
+          
+          debounceRef.current = setTimeout(() => {
+            load();
+          }, 300);
+        }
       )
       .subscribe();
 
     return () => {
       mounted = false;
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
       supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
