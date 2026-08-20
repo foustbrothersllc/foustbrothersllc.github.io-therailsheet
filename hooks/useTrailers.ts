@@ -8,6 +8,8 @@ export function useTrailers() {
   const [departed, setDeparted] = useState<Trailer[]>([]);
   const [loading, setLoading] = useState(true);
   const subscriptionRef = useRef<any>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastDataRef = useRef<string>("");
 
   // Load trailers ONCE on mount
   useEffect(() => {
@@ -22,6 +24,9 @@ export function useTrailers() {
       if (subscriptionRef.current) {
         supabase.removeChannel(subscriptionRef.current);
       }
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
     };
   }, []);
 
@@ -32,17 +37,23 @@ export function useTrailers() {
       .order("created_at", { ascending: false });
 
     if (trailers) {
-      const atRailList = trailers.filter((t) => t.status === "at_rail");
-      const departedList = trailers.filter((t) => t.status === "departed");
-      setAtRail(atRailList);
-      setDeparted(departedList);
+      // Only update state if data actually changed
+      const dataString = JSON.stringify(trailers);
+      if (dataString !== lastDataRef.current) {
+        lastDataRef.current = dataString;
+        
+        const atRailList = trailers.filter((t) => t.status === "at_rail");
+        const departedList = trailers.filter((t) => t.status === "departed");
+        setAtRail(atRailList);
+        setDeparted(departedList);
+      }
     }
     setLoading(false);
   }
 
   function subscribeToChanges() {
     const channel = supabase
-      .channel("trailer-changes", { config: { broadcast: { self: true } } })
+      .channel("trailer-changes")
       .on(
         "postgres_changes",
         {
@@ -51,8 +62,14 @@ export function useTrailers() {
           table: "trailers",
         },
         async (payload) => {
-          // Only reload when actual data changes
-          await loadTrailers();
+          // Debounce rapid-fire updates
+          if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+          }
+          
+          debounceRef.current = setTimeout(async () => {
+            await loadTrailers();
+          }, 300); // Wait 300ms before updating to batch changes
         }
       )
       .subscribe();
