@@ -3,5 +3,5 @@ export default function QREntryPage() {
     <Suspense fallback={<LoadingScreen />}>
       <QREntryForm />
     </Suspense>
-  );
+ import { Suspense, useRef, useState } from "react";
 }
