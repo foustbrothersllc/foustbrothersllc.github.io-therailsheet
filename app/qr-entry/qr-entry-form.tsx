@@ -10,10 +10,11 @@ export default function QREntryFormClient() {
   const supabase = createClient();
   const searchParams = useSearchParams();
   const trailerNumber = searchParams.get("trailer") || "";
+  const loadFromUrl = searchParams.get("load") || "";
 
   const [equipment_number, setEquipment_number] = useState(trailerNumber);
   const [pickup_number, setPickup_number] = useState("");
-  const [load_percentage, setLoad_percentage] = useState("100");
+  const [load_percentage, setLoad_percentage] = useState(loadFromUrl || "100");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [loading, setLoading] = useState(false);
@@ -167,7 +168,7 @@ export default function QREntryFormClient() {
 
           <div>
             <label className="block text-xs font-medium text-yard-muted mb-1.5 uppercase tracking-wide">
-              Load % (defaults to 100)
+              Load % {loadFromUrl && `(provided: ${loadFromUrl}%)`}
             </label>
             <input
               ref={loadRef}
