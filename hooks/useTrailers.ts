@@ -7,14 +7,25 @@ export function useTrailers() {
   const [atRail, setAtRail] = useState<Trailer[]>([]);
   const [departed, setDeparted] = useState<Trailer[]>([]);
   const [loading, setLoading] = useState(true);
+  const subscriptionRef = React.useRef<any>(null);
 
-  // Load trailers once on mount
+  // Load trailers ONCE on mount
   useEffect(() => {
-    loadTrailers();
+    const loadInitial = async () => {
+      await loadTrailers();
+      subscribeToChanges();
+    };
+    
+    loadInitial();
+
+    return () => {
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current);
+      }
+    };
   }, []);
 
   async function loadTrailers() {
-    setLoading(true);
     const { data: trailers } = await supabase
       .from("trailers")
       .select("*")
@@ -29,24 +40,25 @@ export function useTrailers() {
     setLoading(false);
   }
 
-  // Only subscribe to changes, NO polling
-  useEffect(() => {
+  function subscribeToChanges() {
     const channel = supabase
-      .channel("trailers_changes")
+      .channel("trailer-changes", { config: { broadcast: { self: true } } })
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "trailers" },
-        async () => {
-          // When data changes, reload only the affected data
+        {
+          event: "*",
+          schema: "public",
+          table: "trailers",
+        },
+        async (payload) => {
+          // Only reload when actual data changes
           await loadTrailers();
         }
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+    subscriptionRef.current = channel;
+  }
 
   async function refresh() {
     await loadTrailers();
