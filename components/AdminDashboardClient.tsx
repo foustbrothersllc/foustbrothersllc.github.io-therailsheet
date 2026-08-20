@@ -2,6 +2,7 @@
 
 import { AddTrailerModal } from "@/components/AddTrailerModal";
 import { AdminTrailerCard } from "@/components/AdminTrailerCard";
+import { CameraOCRModal } from "@/components/CameraOCRModal";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { CsvImportModal } from "@/components/CsvImportModal";
 import { EditTrailerModal } from "@/components/EditTrailerModal";
@@ -14,7 +15,7 @@ import { useTrailers } from "@/hooks/useTrailers";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
-import { LogOut, Plus, RefreshCw, Search, Upload, X } from "lucide-react";
+import { LogOut, Plus, RefreshCw, Search, Upload, X, Camera } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -26,7 +27,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const supabase = createClient();
   const { profile: liveProfile, signOut } = useAuth();
   const profile = liveProfile ?? initialProfile;
-  useAutoReloadOnNewDeploy(); // self-heal if this tab is left open across a deploy
+  useAutoReloadOnNewDeploy();
   const { atRail, departed, refresh } = useTrailers();
 
   const [editing, setEditing] = useState<Trailer | null>(null);
@@ -34,6 +35,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const [deleting, setDeleting] = useState<Trailer | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
   const [deletingBusy, setDeletingBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -90,6 +92,28 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
     setDeleting(null);
   }
 
+  async function handleCameraData(data: any) {
+    // Save extracted data to database
+    const { error } = await supabase.from("trailers").upsert(
+      {
+        equipment_number: data.equipment_number,
+        pickup_number: data.pickup_number || null,
+        load_percentage: data.load_percentage || null,
+        origin: data.origin || null,
+        destination: data.destination || null,
+        status: "at_rail",
+      },
+      { onConflict: "equipment_number", ignoreDuplicates: false }
+    );
+
+    if (error) {
+      alert("Error saving trailer: " + error.message);
+    } else {
+      await refresh();
+      setShowCamera(false);
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="flex items-center justify-between px-6 h-16 border-b border-yard-border shrink-0">
@@ -114,7 +138,6 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
       </header>
 
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
-        {/* Left/center: live operational view (70%) */}
         <div className="flex-1 lg:flex-[7] min-h-0 flex flex-col px-6 pt-6 pb-4">
           <div className="flex flex-wrap items-center gap-2 mb-5">
             <button
@@ -122,6 +145,12 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
               className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-card bg-yard-panel border border-yard-border text-sm text-yard-text hover:border-yard-borderLight"
             >
               <Plus size={15} /> Add Trailer
+            </button>
+            <button
+              onClick={() => setShowCamera(true)}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-card bg-yard-panel border border-yard-border text-sm text-yard-text hover:border-yard-borderLight"
+            >
+              <Camera size={15} /> Camera OCR
             </button>
             <button
               onClick={() => setShowImport(true)}
@@ -218,7 +247,6 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
           </div>
         </div>
 
-        {/* Right sidebar: users directory (30%) */}
         <div className="lg:flex-[3] min-h-0">
           <UserSidebar currentProfile={profile} />
         </div>
@@ -228,6 +256,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
       <EditTrailerModal trailer={editing} onClose={() => setEditing(null)} />
       <FlagTrailerModal trailer={flagging} onClose={() => setFlagging(null)} />
       <CsvImportModal open={showImport} onClose={() => setShowImport(false)} />
+      <CameraOCRModal open={showCamera} onClose={() => setShowCamera(false)} onExtracted={handleCameraData} />
       <ConfirmModal
         open={!!deleting}
         title="Delete Trailer"
