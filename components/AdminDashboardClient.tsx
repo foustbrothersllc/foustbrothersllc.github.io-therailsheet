@@ -14,7 +14,7 @@ import { useTrailers } from "@/hooks/useTrailers";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
-import { LogOut, Plus, RefreshCw, Search, Upload } from "lucide-react";
+import { LogOut, Plus, RefreshCw, Search, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -147,8 +147,17 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search equipment number"
-                className="w-full h-9 pl-9 pr-3 rounded-card bg-yard-panel border border-yard-border text-sm outline-none focus:border-amber"
+                className="w-full h-9 pl-9 pr-9 rounded-card bg-yard-panel border border-yard-border text-sm outline-none focus:border-amber"
               />
+              {query && (
+                <button
+                  onClick={() => setQuery("")}
+                  aria-label="Clear search"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-yard-faint hover:text-yard-text"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
           </div>
 
