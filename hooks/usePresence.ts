@@ -1,8 +1,7 @@
 "use client";
-
 import { createClient } from "@/lib/supabase/client";
 import { Profile } from "@/lib/types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 /**
  * Joins a shared Supabase Presence channel and tracks the current user's
@@ -12,18 +11,25 @@ import { useEffect, useState } from "react";
 export function usePresence(profile: Profile | null) {
   const supabase = createClient();
   const [onlineIds, setOnlineIds] = useState<Set<string>>(new Set());
+  const lastIdsRef = useRef<string>("");
 
   useEffect(() => {
     if (!profile) return;
-
+    
     const channel = supabase.channel("rail-sheet-presence", {
       config: { presence: { key: profile.id } },
     });
-
+    
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
-        setOnlineIds(new Set(Object.keys(state)));
+        const newIds = Object.keys(state).sort().join(",");
+        
+        // Only update if the list of online users actually changed
+        if (newIds !== lastIdsRef.current) {
+          lastIdsRef.current = newIds;
+          setOnlineIds(new Set(Object.keys(state)));
+        }
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
