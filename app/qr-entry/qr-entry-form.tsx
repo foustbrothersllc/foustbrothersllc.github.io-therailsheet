@@ -11,12 +11,14 @@ export default function QREntryFormClient() {
   const searchParams = useSearchParams();
   const trailerNumber = searchParams.get("trailer") || "";
   const loadFromUrl = searchParams.get("load") || "";
+  const originFromUrl = searchParams.get("origin") || "";
+  const destFromUrl = searchParams.get("destination") || "";
 
   const [equipment_number, setEquipment_number] = useState(trailerNumber);
   const [pickup_number, setPickup_number] = useState("");
   const [load_percentage, setLoad_percentage] = useState(loadFromUrl || "100");
-  const [origin, setOrigin] = useState("");
-  const [destination, setDestination] = useState("");
+  const [origin, setOrigin] = useState(originFromUrl);
+  const [destination, setDestination] = useState(destFromUrl);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -186,7 +188,7 @@ export default function QREntryFormClient() {
 
           <div>
             <label className="block text-xs font-medium text-yard-muted mb-1.5 uppercase tracking-wide">
-              Origin (optional)
+              Origin {originFromUrl && `(provided: ${originFromUrl})`}
             </label>
             <input
               ref={originRef}
@@ -201,7 +203,7 @@ export default function QREntryFormClient() {
 
           <div>
             <label className="block text-xs font-medium text-yard-muted mb-1.5 uppercase tracking-wide">
-              Destination (optional)
+              Destination {destFromUrl && `(provided: ${destFromUrl})`}
             </label>
             <input
               ref={destRef}
