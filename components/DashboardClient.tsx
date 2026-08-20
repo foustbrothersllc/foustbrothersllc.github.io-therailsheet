@@ -10,7 +10,7 @@ import { usePresence } from "@/hooks/usePresence";
 import { useTrailers } from "@/hooks/useTrailers";
 import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
-import { LogOut, Search } from "lucide-react";
+import { LogOut, Search, X } from "lucide-react";
 import { useState } from "react";
 
 interface DashboardClientProps {
@@ -102,8 +102,17 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
             onChange={(e) => setQuery(e.target.value)}
             inputMode="numeric"
             placeholder="Search equipment number"
-            className="w-full h-11 pl-9 pr-3 rounded-card bg-yard-panel border border-yard-border text-sm outline-none focus:border-amber"
+            className="w-full h-11 pl-9 pr-9 rounded-card bg-yard-panel border border-yard-border text-sm outline-none focus:border-amber"
           />
+          {query && (
+            <button
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-yard-faint hover:text-yard-text"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -119,8 +128,17 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
             onChange={(e) => setQuery(e.target.value)}
             inputMode="numeric"
             placeholder="Search equipment number"
-            className="w-full h-11 pl-9 pr-3 rounded-card bg-yard-panel border border-yard-border text-sm outline-none focus:border-amber"
+            className="w-full h-11 pl-9 pr-9 rounded-card bg-yard-panel border border-yard-border text-sm outline-none focus:border-amber"
           />
+          {query && (
+            <button
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-yard-faint hover:text-yard-text"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
       </div>
 
