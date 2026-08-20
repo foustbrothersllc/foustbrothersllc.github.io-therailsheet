@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Trailer } from "@/lib/types";
-import { QRCodeSVG } from "qrcode.react";
+import { Download } from "lucide-react";
 import { useRef } from "react";
 
 interface QRCodeModalProps {
@@ -12,7 +12,7 @@ interface QRCodeModalProps {
 }
 
 export function QRCodeModal({ trailer, onClose }: QRCodeModalProps) {
-  const qrRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   if (!trailer) return null;
 
@@ -20,12 +20,13 @@ export function QRCodeModal({ trailer, onClose }: QRCodeModalProps) {
     trailer.equipment_number
   )}`;
 
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrValue)}`;
+
   const downloadQR = () => {
-    const canvas = qrRef.current?.querySelector("canvas");
-    if (canvas) {
+    if (imgRef.current) {
       const link = document.createElement("a");
       link.download = `${trailer.equipment_number}-qr.png`;
-      link.href = canvas.toDataURL();
+      link.href = qrImageUrl;
       link.click();
     }
   };
@@ -43,6 +44,7 @@ export function QRCodeModal({ trailer, onClose }: QRCodeModalProps) {
             Close
           </Button>
           <Button onClick={downloadQR} className="flex-1">
+            <Download size={16} />
             Download
           </Button>
         </>
@@ -52,17 +54,12 @@ export function QRCodeModal({ trailer, onClose }: QRCodeModalProps) {
         <p className="text-sm text-yard-muted text-center">
           Scan this code to quickly enter trailer details
         </p>
-        <div
-          ref={qrRef}
-          className="p-4 bg-white rounded-card"
-        >
-          <QRCodeSVG
-            value={qrValue}
-            size={256}
-            level="H"
-            includeMargin={true}
-            fgColor="#0E1114"
-            bgColor="#FFFFFF"
+        <div className="p-4 bg-white rounded-card">
+          <img
+            ref={imgRef}
+            src={qrImageUrl}
+            alt="QR Code"
+            className="w-64 h-64"
           />
         </div>
         <div className="bg-yard-panel border border-yard-border rounded-card p-3 w-full">
