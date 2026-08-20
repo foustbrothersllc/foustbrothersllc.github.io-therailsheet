@@ -1,7 +1,11 @@
-export default function QREntryPage() {
-  return (
-    <Suspense fallback={<LoadingScreen />}>
-      <QREntryForm />
-    </Suspense>
- import { Suspense, useRef, useState } from "react";
+"use client";
+
+import { Button } from "@/components/ui/Button";
+import { createClient } from "@/lib/supabase/client";
+import { standardizeEquipmentNumber } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useRef, useState } from "react";
+
+function QREntryForm() {
+  // ... rest of the code
 }
