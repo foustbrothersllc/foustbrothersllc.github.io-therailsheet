@@ -2,58 +2,61 @@ import { createClient } from "@/lib/supabase/client";
 import { Trailer } from "@/lib/types";
 import { useEffect, useState, useRef } from "react";
 
+let globalSubscription: any = null;
+let globalTrailers: Trailer[] = [];
+let globalAtRail: Trailer[] = [];
+let globalDeparted: Trailer[] = [];
+let isLoading = false;
+let debounceRef: NodeJS.Timeout | null = null;
+
 export function useTrailers() {
   const supabase = createClient();
-  const [atRail, setAtRail] = useState<Trailer[]>([]);
-  const [departed, setDeparted] = useState<Trailer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const subscriptionRef = useRef<any>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
-  const lastDataRef = useRef<string>("");
+  const [atRail, setAtRail] = useState<Trailer[]>(globalAtRail);
+  const [departed, setDeparted] = useState<Trailer[]>(globalDeparted);
+  const [loading, setLoading] = useState(isLoading);
 
-  // Load trailers ONCE on mount
+  // Load trailers ONCE globally
   useEffect(() => {
-    const loadInitial = async () => {
-      await loadTrailers();
-      subscribeToChanges();
-    };
-    
-    loadInitial();
-
-    return () => {
-      if (subscriptionRef.current) {
-        supabase.removeChannel(subscriptionRef.current);
-      }
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
+    if (!globalSubscription && globalAtRail.length === 0) {
+      loadTrailersOnce();
+    } else {
+      // Update local state with global data
+      setAtRail(globalAtRail);
+      setDeparted(globalDeparted);
+      setLoading(false);
+    }
   }, []);
 
-  async function loadTrailers() {
+  async function loadTrailersOnce() {
+    if (isLoading) return;
+    isLoading = true;
+    setLoading(true);
+
     const { data: trailers } = await supabase
       .from("trailers")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (trailers) {
-      // Only update state if data actually changed
-      const dataString = JSON.stringify(trailers);
-      if (dataString !== lastDataRef.current) {
-        lastDataRef.current = dataString;
-        
-        const atRailList = trailers.filter((t) => t.status === "at_rail");
-        const departedList = trailers.filter((t) => t.status === "departed");
-        setAtRail(atRailList);
-        setDeparted(departedList);
-      }
+      globalTrailers = trailers;
+      globalAtRail = trailers.filter((t) => t.status === "at_rail");
+      globalDeparted = trailers.filter((t) => t.status === "departed");
+      
+      setAtRail(globalAtRail);
+      setDeparted(globalDeparted);
     }
+
+    isLoading = false;
     setLoading(false);
+    
+    subscribeToChanges();
   }
 
   function subscribeToChanges() {
+    if (globalSubscription) return;
+
     const channel = supabase
-      .channel("trailer-changes")
+      .channel("trailer-changes-v2")
       .on(
         "postgres_changes",
         {
@@ -62,23 +65,49 @@ export function useTrailers() {
           table: "trailers",
         },
         async (payload) => {
-          // Debounce rapid-fire updates
-          if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-          }
+          // Heavy debounce - wait 500ms before updating
+          if (debounceRef) clearTimeout(debounceRef);
           
-          debounceRef.current = setTimeout(async () => {
-            await loadTrailers();
-          }, 300); // Wait 300ms before updating to batch changes
+          debounceRef = setTimeout(async () => {
+            await reloadTrailers();
+          }, 500);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log("Subscribed to trailer changes");
+        }
+      });
 
-    subscriptionRef.current = channel;
+    globalSubscription = channel;
+  }
+
+  async function reloadTrailers() {
+    const { data: trailers } = await supabase
+      .from("trailers")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (trailers) {
+      const newAtRail = trailers.filter((t) => t.status === "at_rail");
+      const newDeparted = trailers.filter((t) => t.status === "departed");
+
+      // Only update if data actually changed
+      if (JSON.stringify(newAtRail) !== JSON.stringify(globalAtRail)) {
+        globalAtRail = newAtRail;
+        setAtRail(newAtRail);
+      }
+      
+      if (JSON.stringify(newDeparted) !== JSON.stringify(globalDeparted)) {
+        globalDeparted = newDeparted;
+        setDeparted(newDeparted);
+      }
+    }
   }
 
   async function refresh() {
-    await loadTrailers();
+    if (debounceRef) clearTimeout(debounceRef);
+    await reloadTrailers();
   }
 
   return { atRail, departed, loading, refresh };
