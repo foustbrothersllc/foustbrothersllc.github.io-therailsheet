@@ -16,9 +16,15 @@ export function QRCodeModal({ trailer, onClose }: QRCodeModalProps) {
 
   if (!trailer) return null;
 
-  const qrValue = `${typeof window !== "undefined" ? window.location.origin : ""}/qr-entry?trailer=${encodeURIComponent(
+  // Build URL with trailer number and load percentage if available
+  let qrValue = `${typeof window !== "undefined" ? window.location.origin : ""}/qr-entry?trailer=${encodeURIComponent(
     trailer.equipment_number
   )}`;
+
+  // Add load percentage if it exists
+  if (trailer.load_percentage !== null && trailer.load_percentage !== undefined) {
+    qrValue += `&load=${trailer.load_percentage}`;
+  }
 
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrValue)}`;
 
@@ -67,6 +73,11 @@ export function QRCodeModal({ trailer, onClose }: QRCodeModalProps) {
           <p className="font-stencil text-lg font-bold text-amber">
             {trailer.equipment_number}
           </p>
+          {trailer.load_percentage !== null && (
+            <p className="text-xs text-yard-faint mt-2">
+              Load: {trailer.load_percentage}%
+            </p>
+          )}
         </div>
         <p className="text-xs text-yard-faint text-center">
           Drivers can scan this QR code with their device to quickly input destination and load information
