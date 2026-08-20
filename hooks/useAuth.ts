@@ -1,13 +1,14 @@
 "use client";
-
 import { createClient } from "@/lib/supabase/client";
 import { Profile } from "@/lib/types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export function useAuth() {
   const supabase = createClient();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastProfileRef = useRef<string>("");
 
   useEffect(() => {
     let mounted = true;
@@ -32,7 +33,12 @@ export function useAuth() {
         .single();
 
       if (mounted) {
-        setProfile(data as Profile | null);
+        // Only update if profile actually changed
+        const profileString = JSON.stringify(data);
+        if (profileString !== lastProfileRef.current) {
+          lastProfileRef.current = profileString;
+          setProfile(data as Profile | null);
+        }
         setLoading(false);
       }
     }
@@ -41,10 +47,25 @@ export function useAuth() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => load());
+    } = supabase.auth.onAuthStateChange((event) => {
+      // Only reload on actual auth events, not every subscription fire
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        // Debounce rapid auth changes
+        if (debounceRef.current) {
+          clearTimeout(debounceRef.current);
+        }
+        
+        debounceRef.current = setTimeout(() => {
+          load();
+        }, 100);
+      }
+    });
 
     return () => {
       mounted = false;
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
       subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
