@@ -1,13 +1,13 @@
 import { createClient } from "@/lib/supabase/client";
 import { Trailer } from "@/lib/types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export function useTrailers() {
   const supabase = createClient();
   const [atRail, setAtRail] = useState<Trailer[]>([]);
   const [departed, setDeparted] = useState<Trailer[]>([]);
   const [loading, setLoading] = useState(true);
-  const subscriptionRef = React.useRef<any>(null);
+  const subscriptionRef = useRef<any>(null);
 
   // Load trailers ONCE on mount
   useEffect(() => {
