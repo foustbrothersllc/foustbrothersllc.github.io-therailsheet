@@ -86,6 +86,13 @@ export function FlagTrailerModal({
     onClose();
   }
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && e.ctrlKey) {
+      e.preventDefault();
+      handleSave();
+    }
+  }
+
   return (
     <Modal
       open={!!trailer}
@@ -114,7 +121,9 @@ export function FlagTrailerModal({
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
+            onKeyDown={handleKeyDown}
             rows={4}
+            placeholder="Press Ctrl+Enter to save"
             className="w-full px-3.5 py-3 rounded-card bg-yard-bg border border-yard-border focus:border-danger outline-none text-sm resize-none"
           />
         </div>
