@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { Trailer } from "@/lib/types";
+import { compareEquipmentNumbers } from "@/lib/utils";
 import { useEffect, useState, useRef } from "react";
 
 let globalSubscription: any = null;
@@ -34,16 +35,28 @@ export function useTrailers() {
 
     const { data: trailers } = await supabase
       .from("trailers")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .select("*");
 
     if (trailers) {
       globalTrailers = trailers;
-      globalAtRail = trailers.filter((t) => t.status === "at_rail");
-      globalDeparted = trailers.filter((t) => t.status === "departed");
       
-      setAtRail(globalAtRail);
-      setDeparted(globalDeparted);
+      // Filter and SORT by equipment number
+      const atRailList = trailers
+        .filter((t) => t.status === "at_rail")
+        .sort((a, b) => {
+          if (a.is_hot !== b.is_hot) return a.is_hot ? -1 : 1;
+          return compareEquipmentNumbers(a.equipment_number, b.equipment_number);
+        });
+      
+      const departedList = trailers
+        .filter((t) => t.status === "departed")
+        .sort((a, b) => compareEquipmentNumbers(a.equipment_number, b.equipment_number));
+      
+      globalAtRail = atRailList;
+      globalDeparted = departedList;
+      
+      setAtRail(atRailList);
+      setDeparted(departedList);
     }
 
     isLoading = false;
@@ -85,12 +98,20 @@ export function useTrailers() {
   async function reloadTrailers() {
     const { data: trailers } = await supabase
       .from("trailers")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .select("*");
 
     if (trailers) {
-      const newAtRail = trailers.filter((t) => t.status === "at_rail");
-      const newDeparted = trailers.filter((t) => t.status === "departed");
+      // Filter and SORT by equipment number
+      const newAtRail = trailers
+        .filter((t) => t.status === "at_rail")
+        .sort((a, b) => {
+          if (a.is_hot !== b.is_hot) return a.is_hot ? -1 : 1;
+          return compareEquipmentNumbers(a.equipment_number, b.equipment_number);
+        });
+      
+      const newDeparted = trailers
+        .filter((t) => t.status === "departed")
+        .sort((a, b) => compareEquipmentNumbers(a.equipment_number, b.equipment_number));
 
       // Only update if data actually changed
       if (JSON.stringify(newAtRail) !== JSON.stringify(globalAtRail)) {
