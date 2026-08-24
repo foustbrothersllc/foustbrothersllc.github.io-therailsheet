@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { Profile, Trailer } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import { Flame, Tag, BarChart3 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -34,12 +34,34 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
   const [showBarcode, setShowBarcode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [flagNote, setFlagNote] = useState<string | null>(null);
+  const [flagCreator, setFlagCreator] = useState<{ first_name: string; last_name: string } | null>(null);
+  const [flagCreatedAt, setFlagCreatedAt] = useState<string | null>(null);
 
   useEffect(() => {
     if (trailer) {
       setFlagNote(trailer.flag_note);
+      setFlagCreatedAt(trailer.flag_created_at);
+      
+      // Fetch creator's name if flag exists
+      if (trailer.flag_created_by) {
+        fetchFlagCreator(trailer.flag_created_by);
+      } else {
+        setFlagCreator(null);
+      }
     }
   }, [trailer]);
+
+  async function fetchFlagCreator(userId: string) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", userId)
+      .single();
+
+    if (data) {
+      setFlagCreator(data);
+    }
+  }
 
   if (!trailer) return null;
 
@@ -127,7 +149,12 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
                 <Tag size={12} />
                 Redtag
               </p>
-              <p className="text-sm text-yard-text">{flagNote}</p>
+              <p className="text-sm text-yard-text mb-2">{flagNote}</p>
+              {flagCreator && flagCreatedAt && (
+                <p className="text-xs text-danger/80">
+                  Tagged by {flagCreator.first_name} {flagCreator.last_name} · {formatRelativeTime(flagCreatedAt)}
+                </p>
+              )}
             </div>
           )}
           <DetailRow label="Pickup #" value={trailer.pickup_number} />
