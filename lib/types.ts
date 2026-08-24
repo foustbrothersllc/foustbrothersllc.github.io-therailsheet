@@ -11,6 +11,7 @@ export interface Trailer {
   load_percentage: number | null;
   flag_note: string | null;
   flag_created_by: string | null;
+  flag_created_at: string | null;
   is_hot: boolean;
   assigned_to_id: string | null;
   assigned_driver_name: string | null;
