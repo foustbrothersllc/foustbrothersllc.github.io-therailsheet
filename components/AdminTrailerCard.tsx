@@ -1,8 +1,10 @@
 "use client";
 
-import { Trailer } from "@/lib/types";
+import { Trailer, Profile } from "@/lib/types";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { Flame, Pencil, RotateCcw, Send, Tag, Trash2, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 interface AdminTrailerCardProps {
   trailer: Trailer;
@@ -23,7 +25,27 @@ export function AdminTrailerCard({
   onMarkDeparted,
   onDelete,
 }: AdminTrailerCardProps) {
+  const supabase = createClient();
+  const [flagCreator, setFlagCreator] = useState<Profile | null>(null);
   const isDeparted = trailer.status === "departed";
+
+  useEffect(() => {
+    if (trailer.flag_created_by) {
+      fetchFlagCreator(trailer.flag_created_by);
+    }
+  }, [trailer.flag_created_by]);
+
+  async function fetchFlagCreator(userId: string) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", userId)
+      .single();
+
+    if (data) {
+      setFlagCreator(data as Profile);
+    }
+  }
 
   const routeLine = [
     trailer.origin ?? "—",
@@ -47,6 +69,13 @@ export function AdminTrailerCard({
           {routeLine}
           {sortLine && ` · ${sortLine}`}
         </p>
+        {trailer.flag_note && flagCreator && trailer.flag_created_at && (
+          <p className="text-xs text-danger mt-1">
+            Redtag: {trailer.flag_note.substring(0, 30)}
+            {trailer.flag_note.length > 30 ? "..." : ""} · Tagged by {flagCreator.first_name}{" "}
+            {flagCreator.last_name} {formatRelativeTime(trailer.flag_created_at)}
+          </p>
+        )}
         {isDeparted && trailer.assigned_driver_name && (
           <p className="flex items-center gap-1 text-xs text-depart mt-1">
             <User size={11} />
