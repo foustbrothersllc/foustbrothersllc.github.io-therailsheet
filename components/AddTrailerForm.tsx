@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 import { standardizeEquipmentNumber, upper } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const empty = {
   equipment_number: "",
@@ -24,6 +24,7 @@ export function AddTrailerForm({ onSaved }: AddTrailerFormProps) {
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,6 +65,12 @@ export function AddTrailerForm({ onSaved }: AddTrailerFormProps) {
         value={form[key]}
         required={required}
         inputMode={numeric ? "numeric" : undefined}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            formRef.current?.requestSubmit();
+          }
+        }}
         onChange={(e) =>
           setForm((f) => ({
             ...f,
@@ -76,7 +83,7 @@ export function AddTrailerForm({ onSaved }: AddTrailerFormProps) {
   );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         {field("equipment_number", "Equipment Number", { required: true })}
         {field("pickup_number", "Pickup #", { required: true })}
