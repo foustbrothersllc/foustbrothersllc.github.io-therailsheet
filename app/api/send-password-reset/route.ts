@@ -44,24 +44,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found." }, { status: 404 });
     }
 
-    // Generate recovery link
+    // Generate recovery link using the correct Supabase method
     const { data, error } = await admin.auth.admin.generateLink({
       type: "recovery",
       email: targetProfile.email,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "https://railsheet.foustbrothersllc.com"}/reset-password`,
+        redirectTo: process.env.NEXT_PUBLIC_APP_URL || "https://railsheet.foustbrothersllc.com",
       },
     });
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error || !data) {
+      console.error("generateLink error:", error);
+      return NextResponse.json({ 
+        error: error?.message || "Failed to generate link" 
+      }, { status: 500 });
     }
 
-    return NextResponse.json({ link: data.properties.recovery_link });
+    // The response structure from generateLink
+    const recoveryLink = data?.properties?.recovery_link || data?.recovery_link || data?.link;
+    
+    if (!recoveryLink) {
+      console.error("No recovery link in response:", data);
+      return NextResponse.json({ 
+        error: "Failed to generate recovery link - no link in response" 
+      }, { status: 500 });
+    }
+
+    return NextResponse.json({ link: recoveryLink });
   } catch (err) {
-    console.error("send-password-reset error", err);
+    console.error("send-password-reset error:", err);
     return NextResponse.json(
-      { error: "Failed to generate reset link." },
+      { error: `Failed to generate reset link: ${err instanceof Error ? err.message : String(err)}` },
       { status: 500 }
     );
   }
