@@ -29,6 +29,7 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
   const [resetError, setResetError] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
+  const [emailTextCopied, setEmailTextCopied] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -41,6 +42,7 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
       setResetError(null);
       setLinkCopied(false);
       setEmailCopied(false);
+      setEmailTextCopied(false);
     }
   }, [user]);
 
@@ -141,6 +143,14 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
     const body = `Click this link to reset your password:\n\n${resetLink}\n\nThis link will expire after you use it.`;
     const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailtoLink;
+  }
+
+  function copyEmailText() {
+    if (!resetLink) return;
+    const emailText = `To: ${user.email}\nSubject: Password Reset Link\n\nClick this link to reset your password:\n\n${resetLink}\n\nThis link will expire after you use it.`;
+    navigator.clipboard.writeText(emailText);
+    setEmailTextCopied(true);
+    setTimeout(() => setEmailTextCopied(false), 2000);
   }
 
   return (
@@ -270,26 +280,39 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
             <p className="text-xs font-mono text-yard-faint mb-2">Reset Link:</p>
             <p className="text-xs font-mono text-amber">{resetLink}</p>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={copyResetLink}
-              className="h-10 flex items-center justify-center gap-2 rounded-card bg-amber/15 border border-amber/30 text-amber text-sm font-semibold hover:bg-amber/25"
+              className="h-10 flex items-center justify-center gap-1 rounded-card bg-amber/15 border border-amber/30 text-amber text-sm font-semibold hover:bg-amber/25"
+              title="Copy just the reset link"
             >
               {linkCopied ? (
-                <>
-                  <Check size={16} />
-                </>
+                <Check size={16} />
               ) : (
                 <>
-                  <Copy size={16} /> Copy
+                  <Copy size={16} /> Link
+                </>
+              )}
+            </button>
+            <button
+              onClick={copyEmailText}
+              className="h-10 flex items-center justify-center gap-1 rounded-card bg-amber/15 border border-amber/30 text-amber text-sm font-semibold hover:bg-amber/25"
+              title="Copy formatted email (To, Subject, Body)"
+            >
+              {emailTextCopied ? (
+                <Check size={16} />
+              ) : (
+                <>
+                  <Copy size={16} /> Email
                 </>
               )}
             </button>
             <button
               onClick={handleEmailClick}
-              className="h-10 flex items-center justify-center gap-2 rounded-card bg-amber text-yard-bg text-sm font-semibold hover:bg-amber/90"
+              className="h-10 flex items-center justify-center gap-1 rounded-card bg-amber text-yard-bg text-sm font-semibold hover:bg-amber/90"
+              title="Open email client (if configured)"
             >
-              📧 Email
+              📧
             </button>
           </div>
         </div>
