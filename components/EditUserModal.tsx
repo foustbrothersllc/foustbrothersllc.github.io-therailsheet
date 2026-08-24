@@ -146,7 +146,7 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
   }
 
   function copyEmailText() {
-    if (!resetLink) return;
+    if (!resetLink || !user) return;
     const emailText = `To: ${user.email}\nSubject: Password Reset Link\n\nClick this link to reset your password:\n\n${resetLink}\n\nThis link will expire after you use it.`;
     navigator.clipboard.writeText(emailText);
     setEmailTextCopied(true);
