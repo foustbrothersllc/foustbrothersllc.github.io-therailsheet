@@ -1,14 +1,14 @@
 "use client";
 
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { BarcodeModal } from "@/components/BarcodeModal";
 import { FlagTrailerModal } from "@/components/FlagTrailerModal";
-import { QRCodeModal } from "@/components/QRCodeModal";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { Profile, Trailer } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Flame, QrCode, Tag } from "lucide-react";
+import { Flame, Tag, BarChart3 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface TrailerDetailModalProps {
@@ -31,7 +31,7 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
   const [confirming, setConfirming] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [flagging, setFlagging] = useState(false);
-  const [showQR, setShowQR] = useState(false);
+  const [showBarcode, setShowBarcode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [flagNote, setFlagNote] = useState<string | null>(null);
 
@@ -59,7 +59,7 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
         assigned_driver_emp_id: profile.employee_id,
       })
       .eq("id", trailer.id)
-      .eq("status", "at_rail"); // guards against a race with another driver
+      .eq("status", "at_rail");
 
     setAccepting(false);
 
@@ -75,19 +75,19 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
   return (
     <>
       <Modal
-        open={!!trailer && !confirming && !flagging && !showQR}
+        open={!!trailer && !confirming && !flagging && !showBarcode}
         onClose={onClose}
         title={trailer.equipment_number}
         titleClassName="text-4xl"
         headerActions={
-          <div className="flex items-center gap-1">
+          <>
             <button
-              onClick={() => setShowQR(true)}
-              aria-label="Show QR code"
-              title="Show QR code for drivers"
-              className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-amber hover:bg-amber/10 transition-colors"
+              onClick={() => setShowBarcode(true)}
+              aria-label="Show barcode"
+              title="Show Code128 barcode"
+              className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-amber hover:bg-amber/10"
             >
-              <QrCode size={17} />
+              <BarChart3 size={17} />
             </button>
             <button
               onClick={() => setFlagging(true)}
@@ -102,7 +102,7 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
             >
               <Tag size={17} />
             </button>
-          </div>
+          </>
         }
         footer={
           canAccept ? (
@@ -153,7 +153,7 @@ export function TrailerDetailModal({ trailer, profile, onClose }: TrailerDetailM
         )}
       </Modal>
 
-      <QRCodeModal trailer={showQR ? trailer : null} onClose={() => setShowQR(false)} />
+      <BarcodeModal trailer={showBarcode ? trailer : null} onClose={() => setShowBarcode(false)} />
 
       <FlagTrailerModal
         trailer={flagging ? trailer : null}
