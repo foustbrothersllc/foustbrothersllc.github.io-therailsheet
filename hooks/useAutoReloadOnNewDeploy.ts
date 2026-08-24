@@ -2,8 +2,6 @@
 
 import { useEffect } from "react";
 
-const CHECK_INTERVAL_MS = 60000;
-
 /**
  * Every deploy bakes a fresh NEXT_PUBLIC_BUILD_ID into the client bundle.
  * This periodically asks the server (running whatever deployment is
