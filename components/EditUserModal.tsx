@@ -136,7 +136,7 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
   }
 
   function handleEmailClick() {
-    if (!resetLink) return;
+    if (!resetLink || !user) return;
     const subject = "Password Reset Link";
     const body = `Click this link to reset your password:\n\n${resetLink}\n\nThis link will expire after you use it.`;
     const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
