@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { Profile } from "@/lib/types";
-import { Trash2 } from "lucide-react";
+import { Trash2, Copy, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface EditUserModalProps {
@@ -24,6 +24,7 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
   const [deleting, setDeleting] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailCopied, setEmailCopied] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -32,6 +33,7 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
       setEmployeeId(user.employee_id);
       setError(null);
       setConfirmingDelete(false);
+      setEmailCopied(false);
     }
   }, [user]);
 
@@ -39,6 +41,12 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
 
   const isProtected = user.email.toLowerCase() === PROTECTED_EMAIL;
   const employeeIdValid = /^[0-9]{6,8}$/.test(employeeId);
+
+  function copyEmail() {
+    navigator.clipboard.writeText(user.email);
+    setEmailCopied(true);
+    setTimeout(() => setEmailCopied(false), 2000);
+  }
 
   async function handleSave() {
     if (!employeeIdValid) {
@@ -88,6 +96,8 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
     setConfirmingDelete(false);
     onClose();
   }
+
+
 
   return (
     <>
@@ -158,11 +168,24 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
             <label className="block text-xs uppercase tracking-wide text-yard-muted mb-1.5">
               Email
             </label>
-            <input
-              value={user.email}
-              disabled
-              className="w-full h-11 px-3.5 rounded-card bg-yard-bg/50 border border-yard-border text-yard-faint text-sm cursor-not-allowed"
-            />
+            <div className="flex gap-2">
+              <input
+                value={user.email}
+                disabled
+                className="flex-1 h-11 px-3.5 rounded-card bg-yard-bg/50 border border-yard-border text-yard-faint text-sm cursor-not-allowed"
+              />
+              <button
+                onClick={copyEmail}
+                className="h-11 px-3.5 rounded-card bg-amber/15 border border-amber/30 text-amber hover:bg-amber/25 transition-colors flex items-center gap-2 text-sm font-semibold"
+                title="Copy email"
+              >
+                {emailCopied ? (
+                  <Check size={16} />
+                ) : (
+                  <Copy size={16} />
+                )}
+              </button>
+            </div>
           </div>
           {error && (
             <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2">
@@ -171,6 +194,8 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
           )}
         </div>
       </Modal>
+
+
 
       <ConfirmModal
         open={confirmingDelete}
