@@ -53,20 +53,34 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (error || !data) {
+    if (error) {
       console.error("generateLink error:", error);
       return NextResponse.json({ 
-        error: error?.message || "Failed to generate link" 
+        error: error.message || "Failed to generate link" 
       }, { status: 500 });
     }
 
-    // The response structure from generateLink
-    const recoveryLink = data?.properties?.recovery_link || data?.recovery_link || data?.link;
+    console.log("generateLink response:", JSON.stringify(data, null, 2));
+
+    // Try multiple possible response structures
+    let recoveryLink = null;
+    if (data && typeof data === "object") {
+      if ("properties" in data && data.properties && "recovery_link" in data.properties) {
+        recoveryLink = (data.properties as any).recovery_link;
+      } else if ("recovery_link" in data) {
+        recoveryLink = (data as any).recovery_link;
+      } else if ("link" in data) {
+        recoveryLink = (data as any).link;
+      } else {
+        // Log what we actually got
+        console.error("Unexpected data structure:", data);
+      }
+    }
     
     if (!recoveryLink) {
-      console.error("No recovery link in response:", data);
+      console.error("Could not extract recovery link from response:", data);
       return NextResponse.json({ 
-        error: "Failed to generate recovery link - no link in response" 
+        error: "Failed to generate recovery link - invalid response structure" 
       }, { status: 500 });
     }
 
