@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       type: "recovery",
       email: targetProfile.email,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "https://railsheet.foustbrothersllc.com"}/reset-password`,
+        redirectTo: "https://railsheet.foustbrothersllc.com/reset-password",
       },
     });
 
