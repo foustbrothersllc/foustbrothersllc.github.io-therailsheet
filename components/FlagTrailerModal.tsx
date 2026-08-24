@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
-import { Trailer } from "@/lib/types";
+import { Trailer, Profile } from "@/lib/types";
 import { useEffect, useState } from "react";
 
 interface FlagTrailerModalProps {
@@ -11,6 +11,7 @@ interface FlagTrailerModalProps {
   onClose: () => void;
   onSaved?: (note: string | null) => void;
   allowClear?: boolean;
+  currentProfile?: Profile | null;
 }
 
 export function FlagTrailerModal({
@@ -18,6 +19,7 @@ export function FlagTrailerModal({
   onClose,
   onSaved,
   allowClear = true,
+  currentProfile,
 }: FlagTrailerModalProps) {
   const supabase = createClient();
   const [note, setNote] = useState("");
@@ -37,10 +39,21 @@ export function FlagTrailerModal({
     setSaving(true);
     setError(null);
     const trimmed = note.trim() || null;
+    
+    // Get current user for flag_created_by
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     const { error } = await supabase
       .from("trailers")
-      .update({ flag_note: trimmed })
+      .update({
+        flag_note: trimmed,
+        flag_created_by: user?.id ?? null,
+        flag_created_at: trimmed ? new Date().toISOString() : null,
+      })
       .eq("id", trailer!.id);
+
     setSaving(false);
     if (error) {
       setError(error.message);
@@ -55,8 +68,13 @@ export function FlagTrailerModal({
     setError(null);
     const { error } = await supabase
       .from("trailers")
-      .update({ flag_note: null })
+      .update({
+        flag_note: null,
+        flag_created_by: null,
+        flag_created_at: null,
+      })
       .eq("id", trailer!.id);
+
     setSaving(false);
     if (error) {
       setError(error.message);
