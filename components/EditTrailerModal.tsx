@@ -5,7 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { Trailer } from "@/lib/types";
 import { standardizeEquipmentNumber, upper } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface EditTrailerModalProps {
   trailer: Trailer | null;
@@ -27,6 +27,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (trailer) {
@@ -77,7 +78,12 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
       </label>
       <input
         value={form[key]}
-        inputMode={numeric ? "numeric" : undefined}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleSave();
+          }
+        }}
         onChange={(e) =>
           setForm((f) => ({
             ...f,
@@ -105,7 +111,7 @@ export function EditTrailerModal({ trailer, onClose }: EditTrailerModalProps) {
         </>
       }
     >
-      <div className="space-y-3">
+      <div ref={formRef} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           {field("equipment_number", "Equipment Number")}
           {field("pickup_number", "Pickup #")}
