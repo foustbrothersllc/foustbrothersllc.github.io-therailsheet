@@ -43,7 +43,7 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
   const employeeIdValid = /^[0-9]{6,8}$/.test(employeeId);
 
   function copyEmail() {
-    navigator.clipboard.writeText(user.email);
+    navigator.clipboard.writeText(user!.email);
     setEmailCopied(true);
     setTimeout(() => setEmailCopied(false), 2000);
   }
