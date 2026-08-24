@@ -38,7 +38,8 @@ export function FlagTrailerModal({
   async function handleSave() {
     setSaving(true);
     setError(null);
-    const trimmed = note.trim() || null;
+    // Convert to uppercase only on save
+    const trimmed = note.trim().toUpperCase() || null;
     
     // Get current user for flag_created_by
     const {
@@ -112,7 +113,7 @@ export function FlagTrailerModal({
           </label>
           <textarea
             value={note}
-            onChange={(e) => setNote(e.target.value.toUpperCase())}
+            onChange={(e) => setNote(e.target.value)}
             rows={4}
             className="w-full px-3.5 py-3 rounded-card bg-yard-bg border border-yard-border focus:border-danger outline-none text-sm resize-none"
           />
