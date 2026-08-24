@@ -62,25 +62,13 @@ export async function POST(req: NextRequest) {
 
     console.log("generateLink response:", JSON.stringify(data, null, 2));
 
-    // Try multiple possible response structures
-    let recoveryLink = null;
-    if (data && typeof data === "object") {
-      if ("properties" in data && data.properties && "recovery_link" in data.properties) {
-        recoveryLink = (data.properties as any).recovery_link;
-      } else if ("recovery_link" in data) {
-        recoveryLink = (data as any).recovery_link;
-      } else if ("link" in data) {
-        recoveryLink = (data as any).link;
-      } else {
-        // Log what we actually got
-        console.error("Unexpected data structure:", data);
-      }
-    }
+    // Extract the action_link from properties
+    const recoveryLink = data?.properties?.action_link;
     
     if (!recoveryLink) {
-      console.error("Could not extract recovery link from response:", data);
+      console.error("Could not extract action_link from response:", data);
       return NextResponse.json({ 
-        error: "Failed to generate recovery link - invalid response structure" 
+        error: "Failed to generate recovery link" 
       }, { status: 500 });
     }
 
