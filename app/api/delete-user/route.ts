@@ -54,6 +54,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Sign out the user being deleted (force logout)
+    // This is done via the admin API
+    await admin.auth.admin.signOut(userId, "all");
+
+    // Then delete the user
     const { error } = await admin.auth.admin.deleteUser(userId);
 
     if (error) {
