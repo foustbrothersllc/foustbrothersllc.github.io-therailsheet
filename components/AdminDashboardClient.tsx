@@ -16,7 +16,7 @@ import { useTrailers } from "@/hooks/useTrailers";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
-import { LogOut, Plus, RefreshCw, Search, Upload, X, FileText } from "lucide-react";
+import { LogOut, Plus, RefreshCw, Search, Upload, X, FileText, Snowflake } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -29,7 +29,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const { profile: liveProfile, signOut } = useAuth();
   const profile = liveProfile ?? initialProfile;
   useAutoReloadOnNewDeploy();
-  const { atRail, departed, refresh } = useTrailers();
+  const { atRail, cold, departed, refresh } = useTrailers(false);
 
   const [editing, setEditing] = useState<Trailer | null>(null);
   const [flagging, setFlagging] = useState<Trailer | null>(null);
@@ -46,6 +46,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
     query.trim() === "" || t.equipment_number.includes(query.trim().toUpperCase());
 
   const filteredAtRail = atRail.filter(matches);
+  const filteredCold = cold.filter(matches);
   const filteredDeparted = departed.filter(matches);
 
   async function handleManualRefresh() {
@@ -188,8 +189,8 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                 </h2>
                 <span className="text-xs text-yard-faint">{filteredAtRail.length}</span>
               </div>
-              <PullToRefresh onRefresh={refresh} className="flex-1 space-y-2.5 pb-4">
-                {filteredAtRail.length === 0 && (
+              <PullToRefresh onRefresh={refresh} className="flex-1 space-y-2.5 pb-4 min-h-0 overflow-y-auto">
+                {filteredAtRail.length === 0 && filteredCold.length === 0 && (
                   <p className="text-sm text-yard-faint px-1 py-8 text-center">Nothing here.</p>
                 )}
                 {filteredAtRail.map((t) => (
@@ -206,6 +207,31 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                     onViewDetails={() => setSelectedTrailerDetail(t)}
                   />
                 ))}
+
+                {filteredCold.length > 0 && (
+                  <>
+                    <div className="flex items-center gap-2 mt-6 pt-6 border-t border-yard-border">
+                      <Snowflake size={14} className="text-depart" />
+                      <h3 className="font-display text-xs uppercase tracking-widest text-yard-muted">
+                        Cold ({filteredCold.length})
+                      </h3>
+                    </div>
+                    {filteredCold.map((t) => (
+                      <AdminTrailerCard
+                        key={t.id}
+                        trailer={t}
+                        onRevert={() => handleRevert(t)}
+                        onEdit={() => setEditing(t)}
+                        onFlag={() => setFlagging(t)}
+                        onToggleHot={() => handleToggleHot(t)}
+                        onToggleCold={() => handleToggleCold(t)}
+                        onMarkDeparted={() => handleMarkDeparted(t)}
+                        onDelete={() => setDeleting(t)}
+                        onViewDetails={() => setSelectedTrailerDetail(t)}
+                      />
+                    ))}
+                  </>
+                )}
               </PullToRefresh>
             </div>
 
@@ -217,7 +243,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                 </h2>
                 <span className="text-xs text-yard-faint">{filteredDeparted.length}</span>
               </div>
-              <PullToRefresh onRefresh={refresh} className="flex-1 space-y-2.5 pb-4">
+              <PullToRefresh onRefresh={refresh} className="flex-1 space-y-2.5 pb-4 min-h-0 overflow-y-auto">
                 {filteredDeparted.length === 0 && (
                   <p className="text-sm text-yard-faint px-1 py-8 text-center">Nothing here.</p>
                 )}
