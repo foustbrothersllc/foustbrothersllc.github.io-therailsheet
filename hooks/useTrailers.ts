@@ -10,7 +10,7 @@ let globalDeparted: Trailer[] = [];
 let isLoading = false;
 let debounceRef: NodeJS.Timeout | null = null;
 
-export function useTrailers() {
+export function useTrailers(hideColdfromDrivers = true) {
   const supabase = createClient();
   const [atRail, setAtRail] = useState<Trailer[]>(globalAtRail);
   const [departed, setDeparted] = useState<Trailer[]>(globalDeparted);
@@ -40,16 +40,19 @@ export function useTrailers() {
     if (trailers) {
       globalTrailers = trailers;
       
+      // Filter: hide cold trailers from regular drivers
+      const filterCold = (t: Trailer) => !hideColdfromDrivers || !t.is_cold;
+      
       // Filter and SORT by equipment number
       const atRailList = trailers
-        .filter((t) => t.status === "at_rail")
+        .filter((t) => t.status === "at_rail" && filterCold(t))
         .sort((a, b) => {
           if (a.is_hot !== b.is_hot) return a.is_hot ? -1 : 1;
           return compareEquipmentNumbers(a.equipment_number, b.equipment_number);
         });
       
       const departedList = trailers
-        .filter((t) => t.status === "departed")
+        .filter((t) => t.status === "departed" && filterCold(t))
         .sort((a, b) => compareEquipmentNumbers(a.equipment_number, b.equipment_number));
       
       globalAtRail = atRailList;
@@ -101,16 +104,19 @@ export function useTrailers() {
       .select("*");
 
     if (trailers) {
+      // Filter: hide cold trailers from regular drivers
+      const filterCold = (t: Trailer) => !hideColdfromDrivers || !t.is_cold;
+      
       // Filter and SORT by equipment number
       const newAtRail = trailers
-        .filter((t) => t.status === "at_rail")
+        .filter((t) => t.status === "at_rail" && filterCold(t))
         .sort((a, b) => {
           if (a.is_hot !== b.is_hot) return a.is_hot ? -1 : 1;
           return compareEquipmentNumbers(a.equipment_number, b.equipment_number);
         });
       
       const newDeparted = trailers
-        .filter((t) => t.status === "departed")
+        .filter((t) => t.status === "departed" && filterCold(t))
         .sort((a, b) => compareEquipmentNumbers(a.equipment_number, b.equipment_number));
 
       // Only update if data actually changed
