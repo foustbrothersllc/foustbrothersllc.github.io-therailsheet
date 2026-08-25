@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function PendingPage() {
   const supabase = createClient();
@@ -54,6 +55,11 @@ export default function PendingPage() {
     }
   }
 
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm text-center">
@@ -77,12 +83,17 @@ export default function PendingPage() {
         </p>
 
         {!showTroubleForm && !submitted && (
-          <button
-            onClick={() => setShowTroubleForm(true)}
-            className="text-sm text-amber hover:underline"
-          >
-            Having trouble?
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setShowTroubleForm(true)}
+              className="text-sm text-amber hover:underline"
+            >
+              Having trouble?
+            </button>
+            <Button variant="secondary" onClick={handleLogout} className="w-full">
+              Back to Login
+            </Button>
+          </div>
         )}
 
         {showTroubleForm && !submitted && (
@@ -116,16 +127,31 @@ export default function PendingPage() {
               onChange={(e) => setMessage(e.target.value)}
               className="w-full px-4 py-3 rounded-card bg-yard-panel border border-yard-border text-sm focus:border-amber outline-none resize-none"
             />
-            <Button type="submit" className="w-full" loading={submitting}>
-              Submit
-            </Button>
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowTroubleForm(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1" loading={submitting}>
+                Submit
+              </Button>
+            </div>
           </form>
         )}
 
         {submitted && (
-          <p className="text-sm text-okay bg-okay/10 border border-okay/30 rounded-card px-3 py-3 mt-4">
-            Thanks — an admin will follow up.
-          </p>
+          <div className="space-y-3">
+            <p className="text-sm text-okay bg-okay/10 border border-okay/30 rounded-card px-3 py-3 mt-4">
+              Thanks — an admin will follow up.
+            </p>
+            <Button variant="secondary" onClick={handleLogout} className="w-full">
+              Back to Login
+            </Button>
+          </div>
         )}
       </div>
     </div>
