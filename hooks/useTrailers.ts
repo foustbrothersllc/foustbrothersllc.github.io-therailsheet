@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from "react";
 let globalSubscription: any = null;
 let globalTrailers: Trailer[] = [];
 let globalAtRail: Trailer[] = [];
+let globalCold: Trailer[] = [];
 let globalDeparted: Trailer[] = [];
 let isLoading = false;
 let debounceRef: NodeJS.Timeout | null = null;
@@ -13,16 +14,16 @@ let debounceRef: NodeJS.Timeout | null = null;
 export function useTrailers(hideColdfromDrivers = true) {
   const supabase = createClient();
   const [atRail, setAtRail] = useState<Trailer[]>(globalAtRail);
+  const [cold, setCold] = useState<Trailer[]>(globalCold);
   const [departed, setDeparted] = useState<Trailer[]>(globalDeparted);
   const [loading, setLoading] = useState(isLoading);
 
-  // Load trailers ONCE globally
   useEffect(() => {
     if (!globalSubscription && globalAtRail.length === 0) {
       loadTrailersOnce();
     } else {
-      // Update local state with global data
       setAtRail(globalAtRail);
+      setCold(globalCold);
       setDeparted(globalDeparted);
       setLoading(false);
     }
@@ -39,32 +40,35 @@ export function useTrailers(hideColdfromDrivers = true) {
 
     if (trailers) {
       globalTrailers = trailers;
-      
-      // Filter: hide cold trailers from regular drivers
-      const filterCold = (t: Trailer) => !hideColdfromDrivers || !t.is_cold;
-      
-      // Filter and SORT by equipment number
+
+      // Separate cold from at_rail
       const atRailList = trailers
-        .filter((t) => t.status === "at_rail" && filterCold(t))
+        .filter((t) => t.status === "at_rail" && !t.is_cold)
         .sort((a, b) => {
           if (a.is_hot !== b.is_hot) return a.is_hot ? -1 : 1;
           return compareEquipmentNumbers(a.equipment_number, b.equipment_number);
         });
-      
-      const departedList = trailers
-        .filter((t) => t.status === "departed" && filterCold(t))
+
+      const coldList = trailers
+        .filter((t) => t.is_cold && t.status === "at_rail")
         .sort((a, b) => compareEquipmentNumbers(a.equipment_number, b.equipment_number));
-      
+
+      const departedList = trailers
+        .filter((t) => t.status === "departed" && !t.is_cold)
+        .sort((a, b) => compareEquipmentNumbers(a.equipment_number, b.equipment_number));
+
       globalAtRail = atRailList;
+      globalCold = coldList;
       globalDeparted = departedList;
-      
+
       setAtRail(atRailList);
+      setCold(hideColdfromDrivers ? [] : coldList);
       setDeparted(departedList);
     }
 
     isLoading = false;
     setLoading(false);
-    
+
     subscribeToChanges();
   }
 
@@ -72,7 +76,7 @@ export function useTrailers(hideColdfromDrivers = true) {
     if (globalSubscription) return;
 
     const channel = supabase
-      .channel("trailer-changes-v2")
+      .channel("trailer-changes-v3")
       .on(
         "postgres_changes",
         {
@@ -81,9 +85,8 @@ export function useTrailers(hideColdfromDrivers = true) {
           table: "trailers",
         },
         async (payload) => {
-          // Heavy debounce - wait 500ms before updating
           if (debounceRef) clearTimeout(debounceRef);
-          
+
           debounceRef = setTimeout(async () => {
             await reloadTrailers();
           }, 500);
@@ -104,27 +107,31 @@ export function useTrailers(hideColdfromDrivers = true) {
       .select("*");
 
     if (trailers) {
-      // Filter: hide cold trailers from regular drivers
-      const filterCold = (t: Trailer) => !hideColdfromDrivers || !t.is_cold;
-      
-      // Filter and SORT by equipment number
       const newAtRail = trailers
-        .filter((t) => t.status === "at_rail" && filterCold(t))
+        .filter((t) => t.status === "at_rail" && !t.is_cold)
         .sort((a, b) => {
           if (a.is_hot !== b.is_hot) return a.is_hot ? -1 : 1;
           return compareEquipmentNumbers(a.equipment_number, b.equipment_number);
         });
-      
-      const newDeparted = trailers
-        .filter((t) => t.status === "departed" && filterCold(t))
+
+      const newCold = trailers
+        .filter((t) => t.is_cold && t.status === "at_rail")
         .sort((a, b) => compareEquipmentNumbers(a.equipment_number, b.equipment_number));
 
-      // Only update if data actually changed
+      const newDeparted = trailers
+        .filter((t) => t.status === "departed" && !t.is_cold)
+        .sort((a, b) => compareEquipmentNumbers(a.equipment_number, b.equipment_number));
+
       if (JSON.stringify(newAtRail) !== JSON.stringify(globalAtRail)) {
         globalAtRail = newAtRail;
         setAtRail(newAtRail);
       }
-      
+
+      if (JSON.stringify(newCold) !== JSON.stringify(globalCold)) {
+        globalCold = newCold;
+        setCold(hideColdfromDrivers ? [] : newCold);
+      }
+
       if (JSON.stringify(newDeparted) !== JSON.stringify(globalDeparted)) {
         globalDeparted = newDeparted;
         setDeparted(newDeparted);
@@ -137,5 +144,5 @@ export function useTrailers(hideColdfromDrivers = true) {
     await reloadTrailers();
   }
 
-  return { atRail, departed, loading, refresh };
+  return { atRail, cold, departed, loading, refresh };
 }
