@@ -83,17 +83,24 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   }
 
   async function checkAndRemoveColdIfOnlyFlag(trailerId: string) {
+    // Wait a bit for the database to update
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
     const { data: trailer } = await supabase
       .from("trailers")
       .select("*")
       .eq("id", trailerId)
       .single();
 
-    if (trailer && trailer.is_cold && !trailer.is_hot && !trailer.flag_note) {
-      await supabase
-        .from("trailers")
-        .update({ is_cold: false })
-        .eq("id", trailerId);
+    // If cold is set AND no other flags exist, remove cold
+    if (trailer && trailer.is_cold) {
+      const hasOtherFlags = trailer.is_hot || (trailer.flag_note && trailer.flag_note.trim().length > 0);
+      if (!hasOtherFlags) {
+        await supabase
+          .from("trailers")
+          .update({ is_cold: false })
+          .eq("id", trailerId);
+      }
     }
   }
 
@@ -103,27 +110,29 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
       .update({ is_hot: !trailer.is_hot })
       .eq("id", trailer.id);
 
-    setTimeout(() => checkAndRemoveColdIfOnlyFlag(trailer.id), 100);
+    // If turning hot OFF, check if cold should auto-remove
+    if (trailer.is_hot) {
+      setTimeout(() => checkAndRemoveColdIfOnlyFlag(trailer.id), 300);
+    }
   }
 
   async function handleToggleCold(trailer: Trailer) {
-    // If toggling cold OFF, just remove it
     if (trailer.is_cold) {
+      // Toggling OFF - just remove it
       await supabase
         .from("trailers")
         .update({ is_cold: false })
         .eq("id", trailer.id);
-      return;
+    } else {
+      // Toggling ON - set it then check if it should auto-remove
+      await supabase
+        .from("trailers")
+        .update({ is_cold: true })
+        .eq("id", trailer.id);
+      
+      // After a brief delay, check if it should auto-remove
+      setTimeout(() => checkAndRemoveColdIfOnlyFlag(trailer.id), 300);
     }
-
-    // If toggling cold ON, set it
-    await supabase
-      .from("trailers")
-      .update({ is_cold: true })
-      .eq("id", trailer.id);
-
-    // Check if this is now the only flag and auto-remove
-    setTimeout(() => checkAndRemoveColdIfOnlyFlag(trailer.id), 100);
   }
 
   async function handleDelete() {
