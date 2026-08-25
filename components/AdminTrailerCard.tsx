@@ -2,7 +2,7 @@
 
 import { Trailer, Profile } from "@/lib/types";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import { Flame, Pencil, RotateCcw, Send, Tag, Trash2, User } from "lucide-react";
+import { Flame, Pencil, RotateCcw, Send, Tag, Trash2, User, Snowflake } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -12,8 +12,10 @@ interface AdminTrailerCardProps {
   onEdit: () => void;
   onFlag: () => void;
   onToggleHot: () => void;
+  onToggleCold: () => void;
   onMarkDeparted: () => void;
   onDelete: () => void;
+  onViewDetails: () => void;
 }
 
 export function AdminTrailerCard({
@@ -22,8 +24,10 @@ export function AdminTrailerCard({
   onEdit,
   onFlag,
   onToggleHot,
+  onToggleCold,
   onMarkDeparted,
   onDelete,
+  onViewDetails,
 }: AdminTrailerCardProps) {
   const supabase = createClient();
   const [flagCreator, setFlagCreator] = useState<Profile | null>(null);
@@ -61,7 +65,10 @@ export function AdminTrailerCard({
   return (
     <div className="flex items-stretch bg-yard-surface border border-yard-border rounded-card overflow-hidden">
       <div className={cn("w-1.5 shrink-0", isDeparted ? "bg-depart" : "bg-amber")} />
-      <div className="flex-1 min-w-0 px-3.5 py-3">
+      <div
+        className="flex-1 min-w-0 px-3.5 py-3 cursor-pointer hover:bg-yard-panel/50 transition-colors"
+        onClick={onViewDetails}
+      >
         <p className="font-stencil font-bold text-base tracking-wider text-yard-text truncate">
           {trailer.equipment_number}
         </p>
@@ -97,6 +104,19 @@ export function AdminTrailerCard({
           )}
         >
           <Flame size={16} />
+        </button>
+        <button
+          onClick={onToggleCold}
+          title={trailer.is_cold ? "Clear COLD" : "Mark COLD — hide from drivers"}
+          aria-label="Toggle COLD"
+          className={cn(
+            "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
+            trailer.is_cold
+              ? "text-depart bg-depart/15 hover:bg-depart/25"
+              : "text-yard-muted hover:text-depart hover:bg-depart/10"
+          )}
+        >
+          <Snowflake size={16} />
         </button>
         <button
           onClick={onFlag}
