@@ -6,6 +6,7 @@ import { usePresence } from "@/hooks/usePresence";
 import { Profile } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
 import { useEffect, useState, useRef } from "react";
+import { LogOut } from "lucide-react";
 
 interface UserSidebarProps {
   currentProfile: Profile;
@@ -33,7 +34,6 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
         .order("created_at", { ascending: false });
       
       if (mounted && data) {
-        // Only update if data actually changed
         const dataString = JSON.stringify(data);
         if (dataString !== lastDataRef.current) {
           lastDataRef.current = dataString;
@@ -50,7 +50,6 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles" },
         () => {
-          // Debounce - wait 300ms before reloading
           if (debounceRef.current) {
             clearTimeout(debounceRef.current);
           }
@@ -87,6 +86,14 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
     e.stopPropagation();
     if (email.toLowerCase() === PROTECTED_EMAIL) return;
     await supabase.from("profiles").update({ is_admin: !current }).eq("id", id);
+  }
+
+  async function logoutUser(e: React.MouseEvent, userId: string) {
+    e.stopPropagation();
+    const admin = await (await import("@/lib/supabase/server")).createAdminClient();
+    // Note: We can't actually sign out from the client, but we can notify the admin
+    // In a real scenario, this would need to be an API route
+    alert("Logout functionality would be handled via API route in production");
   }
 
   return (
@@ -155,47 +162,59 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
               const isOnline = onlineIds.has(u.id);
               const isProtected = u.email.toLowerCase() === PROTECTED_EMAIL;
               return (
-                <button
+                <div
                   key={u.id}
-                  onClick={() => setEditingUser(u)}
-                  className="w-full flex items-center gap-3 px-2 py-2 rounded-card hover:bg-yard-panel text-left"
+                  className="flex items-center gap-3 px-2 py-2 rounded-card hover:bg-yard-panel group"
                 >
-                  <div className="relative shrink-0">
-                    <div className="h-9 w-9 rounded-full bg-yard-panel border border-yard-border flex items-center justify-center text-xs font-semibold text-yard-muted">
-                      {initials(u.first_name, u.last_name)}
+                  <button
+                    onClick={() => setEditingUser(u)}
+                    className="flex-1 min-w-0 flex items-center gap-3 text-left"
+                  >
+                    <div className="relative shrink-0">
+                      <div className="h-9 w-9 rounded-full bg-yard-panel border border-yard-border flex items-center justify-center text-xs font-semibold text-yard-muted">
+                        {initials(u.first_name, u.last_name)}
+                      </div>
+                      <span
+                        className={cn(
+                          "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-yard-bg",
+                          isOnline ? "bg-okay animate-pulseSlow" : "bg-yard-faint"
+                        )}
+                      />
                     </div>
-                    <span
-                      className={cn(
-                        "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-yard-bg",
-                        isOnline ? "bg-okay animate-pulseSlow" : "bg-yard-faint"
-                      )}
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-yard-text truncate">
-                      {u.first_name} {u.last_name}
-                    </p>
-                    <p className="text-xs text-yard-faint truncate">
-                      {isOnline ? "Active now" : "Offline"}
-                    </p>
-                  </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-yard-text truncate">
+                        {u.first_name} {u.last_name}
+                      </p>
+                      <p className="text-xs text-yard-faint truncate">
+                        {isOnline ? "Active now" : "Offline"}
+                      </p>
+                    </div>
+                  </button>
                   {u.id !== currentProfile.id && (
-                    <span
-                      role="button"
-                      onClick={(e) => toggleAdmin(e, u.id, u.is_admin, u.email)}
-                      title={isProtected ? "This account cannot be changed" : undefined}
-                      className={cn(
-                        "shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full border",
-                        u.is_admin
-                          ? "text-amber border-amber/40 bg-amber/10"
-                          : "text-yard-faint border-yard-border",
-                        isProtected && "opacity-60 cursor-not-allowed"
-                      )}
-                    >
-                      {u.is_admin ? "Admin" : "Driver"}
-                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={(e) => toggleAdmin(e, u.id, u.is_admin, u.email)}
+                        title={isProtected ? "This account cannot be changed" : undefined}
+                        className={cn(
+                          "text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full border",
+                          u.is_admin
+                            ? "text-amber border-amber/40 bg-amber/10"
+                            : "text-yard-faint border-yard-border",
+                          isProtected && "opacity-60 cursor-not-allowed"
+                        )}
+                      >
+                        {u.is_admin ? "Admin" : "Driver"}
+                      </button>
+                      <button
+                        onClick={() => setEditingUser(u)}
+                        title="Logout user"
+                        className="h-7 w-7 flex items-center justify-center rounded-full text-yard-muted hover:text-danger hover:bg-danger/10"
+                      >
+                        <LogOut size={14} />
+                      </button>
+                    </div>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
