@@ -13,6 +13,7 @@ export interface Trailer {
   flag_created_by: string | null;
   flag_created_at: string | null;
   is_hot: boolean;
+  is_cold: boolean;
   assigned_to_id: string | null;
   assigned_driver_name: string | null;
   assigned_driver_emp_id: string | null;
