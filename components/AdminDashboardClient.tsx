@@ -82,18 +82,48 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
       .eq("status", "at_rail");
   }
 
+  async function checkAndRemoveColdIfOnlyFlag(trailerId: string) {
+    const { data: trailer } = await supabase
+      .from("trailers")
+      .select("*")
+      .eq("id", trailerId)
+      .single();
+
+    if (trailer && trailer.is_cold && !trailer.is_hot && !trailer.flag_note) {
+      await supabase
+        .from("trailers")
+        .update({ is_cold: false })
+        .eq("id", trailerId);
+    }
+  }
+
   async function handleToggleHot(trailer: Trailer) {
     await supabase
       .from("trailers")
       .update({ is_hot: !trailer.is_hot })
       .eq("id", trailer.id);
+
+    setTimeout(() => checkAndRemoveColdIfOnlyFlag(trailer.id), 100);
   }
 
   async function handleToggleCold(trailer: Trailer) {
+    // If toggling cold OFF, just remove it
+    if (trailer.is_cold) {
+      await supabase
+        .from("trailers")
+        .update({ is_cold: false })
+        .eq("id", trailer.id);
+      return;
+    }
+
+    // If toggling cold ON, set it
     await supabase
       .from("trailers")
-      .update({ is_cold: !trailer.is_cold })
+      .update({ is_cold: true })
       .eq("id", trailer.id);
+
+    // Check if this is now the only flag and auto-remove
+    setTimeout(() => checkAndRemoveColdIfOnlyFlag(trailer.id), 100);
   }
 
   async function handleDelete() {
