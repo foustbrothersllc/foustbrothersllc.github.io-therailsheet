@@ -90,10 +90,8 @@ export function UserSidebar({ currentProfile }: UserSidebarProps) {
 
   async function logoutUser(e: React.MouseEvent, userId: string) {
     e.stopPropagation();
-    const admin = await (await import("@/lib/supabase/server")).createAdminClient();
-    // Note: We can't actually sign out from the client, but we can notify the admin
-    // In a real scenario, this would need to be an API route
-    alert("Logout functionality would be handled via API route in production");
+    // Note: Logout via API route (implement in app/api/logout-user/route.ts)
+    // For now, just opens edit modal which has logout capability
   }
 
   return (
