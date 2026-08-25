@@ -76,6 +76,13 @@ export function AdminTrailerCard({
   return (
     <div className="flex items-stretch bg-yard-surface border border-yard-border rounded-card overflow-hidden">
       <div className={cn("w-1.5 shrink-0", isDeparted ? "bg-depart" : "bg-amber")} />
+      <div className="flex items-center gap-2 px-2 shrink-0">
+        {notesCount > 0 && (
+          <div title={`${notesCount} note${notesCount === 1 ? "" : "s"}`} className="flex items-center gap-1 text-xs text-amber">
+            <MessageSquare size={14} />
+          </div>
+        )}
+      </div>
       <div
         className="flex-1 min-w-0 px-3.5 py-3 cursor-pointer hover:bg-yard-panel/50 transition-colors"
         onClick={onViewDetails}
