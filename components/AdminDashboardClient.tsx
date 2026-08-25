@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
 import { LogOut, Plus, RefreshCw, Search, Upload, X, FileText, Snowflake } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface AdminDashboardClientProps {
   initialProfile: Profile;
@@ -41,6 +41,31 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const [deletingBusy, setDeletingBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+
+  // Auto-release cold trailers when at_rail is depleted
+  useEffect(() => {
+    if (atRail.length === 0 && cold.length > 0) {
+      releaseColdTrailers();
+    }
+  }, [atRail.length, cold.length]);
+
+  async function releaseColdTrailers() {
+    // Get all cold trailers
+    const { data: coldTrailers } = await supabase
+      .from("trailers")
+      .select("id")
+      .eq("is_cold", true);
+
+    if (!coldTrailers || coldTrailers.length === 0) return;
+
+    // Remove cold flag from all of them
+    for (const trailer of coldTrailers) {
+      await supabase
+        .from("trailers")
+        .update({ is_cold: false })
+        .eq("id", trailer.id);
+    }
+  }
 
   const matches = (t: Trailer) =>
     query.trim() === "" || t.equipment_number.includes(query.trim().toUpperCase());
