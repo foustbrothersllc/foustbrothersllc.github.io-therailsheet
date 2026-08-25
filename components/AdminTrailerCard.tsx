@@ -101,12 +101,6 @@ export function AdminTrailerCard({
             {formatRelativeTime(trailer.updated_at)}
           </p>
         )}
-        {notesCount > 0 && (
-          <p className="flex items-center gap-1 text-xs text-amber mt-1">
-            <MessageSquare size={11} />
-            {notesCount} note{notesCount === 1 ? "" : "s"}
-          </p>
-        )}
       </div>
       <div className="flex items-center gap-0.5 px-2 border-l border-yard-border shrink-0">
         <button
