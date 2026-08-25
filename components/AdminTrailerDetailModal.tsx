@@ -196,7 +196,6 @@ export function AdminTrailerDetailModal({
             <textarea
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
-              placeholder="Add a note for other admins..."
               rows={2}
               className="w-full px-3.5 py-2 rounded-card bg-yard-bg border border-yard-border focus:border-amber outline-none text-sm resize-none"
             />
