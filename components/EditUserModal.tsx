@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { Profile } from "@/lib/types";
-import { Trash2, RotateCcw, Copy, Check } from "lucide-react";
+import { Trash2, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface EditUserModalProps {
@@ -23,13 +23,9 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [resetLink, setResetLink] = useState<string | null>(null);
   const [resettingPassword, setResettingPassword] = useState(false);
-  const [resetError, setResetError] = useState<string | null>(null);
-  const [linkCopied, setLinkCopied] = useState(false);
-  const [emailCopied, setEmailCopied] = useState(false);
-  const [emailTextCopied, setEmailTextCopied] = useState(false);
+  const [resetCode, setResetCode] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -38,11 +34,7 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
       setEmployeeId(user.employee_id);
       setError(null);
       setConfirmingDelete(false);
-      setResetLink(null);
-      setResetError(null);
-      setLinkCopied(false);
-      setEmailCopied(false);
-      setEmailTextCopied(false);
+      setResetCode(null);
     }
   }, [user]);
 
@@ -100,86 +92,45 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
     onClose();
   }
 
-  async function handleSendPasswordReset() {
+  async function handleGenerateResetCode() {
     setResettingPassword(true);
-    setResetError(null);
-    setResetLink(null);
+    setError(null);
+    setResetCode(null);
 
-    const res = await fetch("/api/send-password-reset", {
+    const res = await fetch("/api/generate-reset-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: user!.id }),
     });
 
+    const data = await res.json();
     setResettingPassword(false);
 
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setResetError(data.error ?? "Could not generate reset link.");
+      setError(data.error ?? "Could not generate reset code.");
       return;
     }
 
-    const data = await res.json();
-    setResetLink(data.link);
-  }
-
-  function copyResetLink() {
-    if (resetLink) {
-      navigator.clipboard.writeText(resetLink);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    }
-  }
-
-  function copyEmail() {
-    navigator.clipboard.writeText(user!.email);
-    setEmailCopied(true);
-    setTimeout(() => setEmailCopied(false), 2000);
-  }
-
-  function handleEmailClick() {
-    if (!resetLink || !user) return;
-    const subject = "Password Reset Link";
-    const body = `Click this link to reset your password:\n\n${resetLink}\n\nThis link will expire after you use it.`;
-    const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoLink;
-  }
-
-  function copyEmailText() {
-    if (!resetLink || !user) return;
-    const emailText = `To: ${user.email}\nSubject: Password Reset Link\n\nClick this link to reset your password:\n\n${resetLink}\n\nThis link will expire after you use it.`;
-    navigator.clipboard.writeText(emailText);
-    setEmailTextCopied(true);
-    setTimeout(() => setEmailTextCopied(false), 2000);
+    setResetCode(data.code);
   }
 
   return (
     <>
       <Modal
-        open={!!user && !confirmingDelete && !resetLink}
+        open={!!user && !confirmingDelete && !resetCode}
         onClose={onClose}
         title="Edit User"
         compact
         headerActions={
           !isProtected ? (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleSendPasswordReset}
-                aria-label="Send password reset"
-                title="Send password reset link to user"
-                className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-amber hover:bg-amber/10"
-              >
-                <RotateCcw size={17} />
-              </button>
-              <button
-                onClick={() => setConfirmingDelete(true)}
-                aria-label="Delete user"
-                title="Delete user"
-                className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-danger hover:bg-danger/10"
-              >
-                <Trash2 size={17} />
-              </button>
-            </div>
+            <button
+              onClick={() => setConfirmingDelete(true)}
+              aria-label="Delete user"
+              title="Delete user"
+              className="h-9 w-9 flex items-center justify-center rounded-full text-yard-muted hover:text-danger hover:bg-danger/10"
+            >
+              <Trash2 size={17} />
+            </button>
           ) : undefined
         }
         footer={
@@ -232,24 +183,20 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
             <label className="block text-xs uppercase tracking-wide text-yard-muted mb-1.5">
               Email
             </label>
-            <div className="flex gap-2">
-              <input
-                value={user.email}
-                disabled
-                className="flex-1 h-11 px-3.5 rounded-card bg-yard-bg/50 border border-yard-border text-yard-faint text-sm cursor-not-allowed"
-              />
-              <button
-                onClick={copyEmail}
-                className="h-11 px-3.5 rounded-card bg-amber/15 border border-amber/30 text-amber hover:bg-amber/25 transition-colors flex items-center gap-2 text-sm font-semibold"
-                title="Copy email"
-              >
-                {emailCopied ? (
-                  <Check size={16} />
-                ) : (
-                  <Copy size={16} />
-                )}
-              </button>
-            </div>
+            <input
+              value={user.email}
+              disabled
+              className="w-full h-11 px-3.5 rounded-card bg-yard-bg/50 border border-yard-border text-yard-faint text-sm cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <button
+              onClick={handleGenerateResetCode}
+              className="w-full flex items-center justify-center gap-2 h-11 rounded-card bg-yard-panel border border-yard-border text-sm text-amber hover:border-amber/40 transition-colors"
+            >
+              <RotateCcw size={16} />
+              Generate Reset Code
+            </button>
           </div>
           {error && (
             <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2">
@@ -259,93 +206,42 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
         </div>
       </Modal>
 
-      {/* Password Reset Link Modal */}
+      {/* Reset Code Generated Modal */}
       <Modal
-        open={!!resetLink}
-        onClose={() => setResetLink(null)}
-        title="Password Reset Link"
+        open={!!resetCode}
+        onClose={() => setResetCode(null)}
+        title="Password Reset Code"
         compact
         alwaysCentered
         footer={
-          <Button onClick={() => setResetLink(null)} className="w-full">
+          <Button onClick={() => setResetCode(null)} className="w-full">
             Done
           </Button>
         }
       >
-        <div className="space-y-3">
-          <p className="text-sm text-yard-muted mb-3">
-            Share this reset link with {firstName} {lastName}. They can use it to reset their password.
-          </p>
-          <div className="bg-yard-bg border border-yard-border rounded-card p-3 break-all">
-            <p className="text-xs font-mono text-yard-faint mb-2">Reset Link:</p>
-            <p className="text-xs font-mono text-amber">{resetLink}</p>
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-yard-muted mb-3">
+              Give this code to {firstName} {lastName} to reset their password:
+            </p>
+            <div className="bg-amber/10 border border-amber/30 rounded-card p-4">
+              <p className="font-stencil text-4xl font-bold text-amber text-center tracking-widest">
+                {resetCode}
+              </p>
+            </div>
+            <p className="text-xs text-yard-faint text-center mt-3">
+              Code expires in 15 minutes
+            </p>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={copyResetLink}
-              className="h-10 flex items-center justify-center gap-1 rounded-card bg-amber/15 border border-amber/30 text-amber text-sm font-semibold hover:bg-amber/25"
-              title="Copy just the reset link"
-            >
-              {linkCopied ? (
-                <Check size={16} />
-              ) : (
-                <>
-                  <Copy size={16} /> Link
-                </>
-              )}
-            </button>
-            <button
-              onClick={copyEmailText}
-              className="h-10 flex items-center justify-center gap-1 rounded-card bg-amber/15 border border-amber/30 text-amber text-sm font-semibold hover:bg-amber/25"
-              title="Copy formatted email (To, Subject, Body)"
-            >
-              {emailTextCopied ? (
-                <Check size={16} />
-              ) : (
-                <>
-                  <Copy size={16} /> Email
-                </>
-              )}
-            </button>
-            <button
-              onClick={handleEmailClick}
-              className="h-10 flex items-center justify-center gap-1 rounded-card bg-amber text-yard-bg text-sm font-semibold hover:bg-amber/90"
-              title="Open email client (if configured)"
-            >
-              📧
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              if (resetCode) navigator.clipboard.writeText(resetCode);
+            }}
+            className="w-full h-9 rounded-card bg-yard-panel border border-yard-border text-sm text-amber hover:border-amber/40 transition-colors"
+          >
+            Copy Code
+          </button>
         </div>
-      </Modal>
-
-      {/* Password Reset Loading Modal */}
-      <Modal
-        open={resettingPassword}
-        onClose={() => {}}
-        title="Generating Link"
-        compact
-        alwaysCentered
-      >
-        <div className="py-6 text-center space-y-3">
-          <div className="h-6 w-6 rounded-full border-2 border-amber border-t-transparent animate-spin mx-auto" />
-          <p className="text-sm text-yard-muted">Generating password reset link...</p>
-        </div>
-      </Modal>
-
-      {/* Reset Error Modal */}
-      <Modal
-        open={!!resetError && !resettingPassword}
-        onClose={() => setResetError(null)}
-        title="Error"
-        compact
-        alwaysCentered
-        footer={
-          <Button onClick={() => setResetError(null)} className="w-full">
-            Close
-          </Button>
-        }
-      >
-        <p className="text-sm text-danger">{resetError}</p>
       </Modal>
 
       <ConfirmModal
