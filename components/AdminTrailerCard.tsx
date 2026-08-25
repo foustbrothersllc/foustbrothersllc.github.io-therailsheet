@@ -2,7 +2,7 @@
 
 import { Trailer, Profile } from "@/lib/types";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import { Flame, Pencil, RotateCcw, Send, Tag, Trash2, User, Snowflake } from "lucide-react";
+import { Flame, Pencil, RotateCcw, Send, Tag, Trash2, User, Snowflake, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -31,13 +31,15 @@ export function AdminTrailerCard({
 }: AdminTrailerCardProps) {
   const supabase = createClient();
   const [flagCreator, setFlagCreator] = useState<Profile | null>(null);
+  const [notesCount, setNotesCount] = useState(0);
   const isDeparted = trailer.status === "departed";
 
   useEffect(() => {
     if (trailer.flag_created_by) {
       fetchFlagCreator(trailer.flag_created_by);
     }
-  }, [trailer.flag_created_by]);
+    fetchNotesCount();
+  }, [trailer.flag_created_by, trailer.id]);
 
   async function fetchFlagCreator(userId: string) {
     const { data } = await supabase
@@ -49,6 +51,15 @@ export function AdminTrailerCard({
     if (data) {
       setFlagCreator(data as Profile);
     }
+  }
+
+  async function fetchNotesCount() {
+    const { data } = await supabase
+      .from("admin_notes")
+      .select("id", { count: "exact" })
+      .eq("trailer_id", trailer.id);
+
+    setNotesCount(data?.length || 0);
   }
 
   const routeLine = [
@@ -88,6 +99,12 @@ export function AdminTrailerCard({
             <User size={11} />
             {trailer.assigned_driver_name} ({trailer.assigned_driver_emp_id}) ·{" "}
             {formatRelativeTime(trailer.updated_at)}
+          </p>
+        )}
+        {notesCount > 0 && (
+          <p className="flex items-center gap-1 text-xs text-amber mt-1">
+            <MessageSquare size={11} />
+            {notesCount} note{notesCount === 1 ? "" : "s"}
           </p>
         )}
       </div>
