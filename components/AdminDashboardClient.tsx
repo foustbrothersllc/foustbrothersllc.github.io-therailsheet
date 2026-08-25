@@ -108,57 +108,17 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   }
 
   async function handleToggleHot(trailer: Trailer) {
-    const newHotStatus = !trailer.is_hot;
-    
     await supabase
       .from("trailers")
-      .update({ is_hot: newHotStatus })
+      .update({ is_hot: !trailer.is_hot })
       .eq("id", trailer.id);
-
-    // After toggling hot OFF, check if cold should auto-remove
-    if (trailer.is_hot === true) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      await autoRemoveColdIfOnlyFlag(trailer.id);
-    }
   }
 
   async function handleToggleCold(trailer: Trailer) {
-    const newColdStatus = !trailer.is_cold;
-    
     await supabase
       .from("trailers")
-      .update({ is_cold: newColdStatus })
+      .update({ is_cold: !trailer.is_cold })
       .eq("id", trailer.id);
-
-    // After toggling cold ON, check if it should auto-remove
-    if (newColdStatus === true) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      await autoRemoveColdIfOnlyFlag(trailer.id);
-    }
-  }
-
-  async function autoRemoveColdIfOnlyFlag(trailerId: string) {
-    const { data: trailer } = await supabase
-      .from("trailers")
-      .select("is_cold, is_hot, flag_note")
-      .eq("id", trailerId)
-      .single();
-
-    if (!trailer) return;
-
-    // If cold is ON, check if there are OTHER flags
-    if (trailer.is_cold) {
-      const hasHot = trailer.is_hot === true;
-      const hasRedtag = trailer.flag_note && trailer.flag_note.trim().length > 0;
-
-      // If ONLY cold is set (no hot, no redtag), remove cold
-      if (!hasHot && !hasRedtag) {
-        await supabase
-          .from("trailers")
-          .update({ is_cold: false })
-          .eq("id", trailerId);
-      }
-    }
   }
 
   async function handleDelete() {
