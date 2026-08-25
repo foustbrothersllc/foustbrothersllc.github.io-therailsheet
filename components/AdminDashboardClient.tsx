@@ -8,13 +8,15 @@ import { EditTrailerModal } from "@/components/EditTrailerModal";
 import { FlagTrailerModal } from "@/components/FlagTrailerModal";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { UserSidebar } from "@/components/UserSidebar";
+import { PasteCSVModal } from "@/components/PasteCSVModal";
+import { AdminTrailerDetailModal } from "@/components/AdminTrailerDetailModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useAutoReloadOnNewDeploy } from "@/hooks/useAutoReloadOnNewDeploy";
 import { useTrailers } from "@/hooks/useTrailers";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
-import { LogOut, Plus, RefreshCw, Search, Upload, X } from "lucide-react";
+import { LogOut, Plus, RefreshCw, Search, Upload, X, FileText } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -34,6 +36,8 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const [deleting, setDeleting] = useState<Trailer | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showPasteCSV, setShowPasteCSV] = useState(false);
+  const [selectedTrailerDetail, setSelectedTrailerDetail] = useState<Trailer | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -58,6 +62,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
         assigned_to_id: null,
         assigned_driver_name: null,
         assigned_driver_emp_id: null,
+        is_cold: false,
       })
       .eq("id", trailer.id);
   }
@@ -70,6 +75,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
         assigned_to_id: null,
         assigned_driver_name: null,
         assigned_driver_emp_id: null,
+        is_cold: false,
       })
       .eq("id", trailer.id)
       .eq("status", "at_rail");
@@ -79,6 +85,13 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
     await supabase
       .from("trailers")
       .update({ is_hot: !trailer.is_hot })
+      .eq("id", trailer.id);
+  }
+
+  async function handleToggleCold(trailer: Trailer) {
+    await supabase
+      .from("trailers")
+      .update({ is_cold: !trailer.is_cold })
       .eq("id", trailer.id);
   }
 
@@ -127,6 +140,12 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
               className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-card bg-amber text-yard-bg text-sm font-semibold hover:bg-amber/90"
             >
               <Upload size={15} /> Import CSV / Excel
+            </button>
+            <button
+              onClick={() => setShowPasteCSV(true)}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-card bg-yard-panel border border-yard-border text-sm text-yard-text hover:border-yard-borderLight"
+            >
+              <FileText size={15} /> Paste CSV
             </button>
             <button
               onClick={handleManualRefresh}
@@ -181,8 +200,10 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                     onEdit={() => setEditing(t)}
                     onFlag={() => setFlagging(t)}
                     onToggleHot={() => handleToggleHot(t)}
+                    onToggleCold={() => handleToggleCold(t)}
                     onMarkDeparted={() => handleMarkDeparted(t)}
                     onDelete={() => setDeleting(t)}
+                    onViewDetails={() => setSelectedTrailerDetail(t)}
                   />
                 ))}
               </PullToRefresh>
@@ -208,8 +229,10 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                     onEdit={() => setEditing(t)}
                     onFlag={() => setFlagging(t)}
                     onToggleHot={() => handleToggleHot(t)}
+                    onToggleCold={() => handleToggleCold(t)}
                     onMarkDeparted={() => handleMarkDeparted(t)}
                     onDelete={() => setDeleting(t)}
+                    onViewDetails={() => setSelectedTrailerDetail(t)}
                   />
                 ))}
               </PullToRefresh>
@@ -226,6 +249,12 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
       <EditTrailerModal trailer={editing} onClose={() => setEditing(null)} />
       <FlagTrailerModal trailer={flagging} onClose={() => setFlagging(null)} />
       <CsvImportModal open={showImport} onClose={() => setShowImport(false)} />
+      <PasteCSVModal open={showPasteCSV} onClose={() => setShowPasteCSV(false)} />
+      <AdminTrailerDetailModal
+        trailer={selectedTrailerDetail}
+        profile={profile}
+        onClose={() => setSelectedTrailerDetail(null)}
+      />
       <ConfirmModal
         open={!!deleting}
         title="Delete Trailer"
