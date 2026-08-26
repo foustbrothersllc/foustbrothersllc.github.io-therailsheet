@@ -45,6 +45,7 @@ export function AdminTrailerDetailModal({
   useEffect(() => {
     if (trailer) {
       loadNotes();
+      markNotesAsRead();
       setError(null);
       setNewNote("");
     }
@@ -78,6 +79,28 @@ export function AdminTrailerDetailModal({
         })
       );
       setNotes(notesWithNames as AdminNote[]);
+    }
+  }
+
+  async function markNotesAsRead() {
+    if (!trailer) return;
+
+    const { data: notes } = await supabase
+      .from("admin_notes")
+      .select("id, read_by_ids")
+      .eq("trailer_id", trailer.id);
+
+    if (notes) {
+      for (const note of notes) {
+        const readByIds = note.read_by_ids || [];
+        if (!readByIds.includes(profile.id)) {
+          readByIds.push(profile.id);
+          await supabase
+            .from("admin_notes")
+            .update({ read_by_ids: readByIds })
+            .eq("id", note.id);
+        }
+      }
     }
   }
 
