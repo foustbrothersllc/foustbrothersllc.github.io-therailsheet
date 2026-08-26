@@ -89,7 +89,7 @@ export function AdminTrailerCard({
       <div className="flex items-center gap-2 px-2 shrink-0">
         {totalNotes > 0 && (
           <div title={`${totalNotes} note${totalNotes === 1 ? "" : "s"}`} className="flex items-center gap-1 text-xs">
-            <MessageSquare size={14} className={unreadCount > 0 ? "text-amber" : "text-yard-muted"} />
+            <MessageSquare size={14} className="text-amber" />
             {unreadCount > 0 && (
               <span className="bg-amber text-yard-bg text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {unreadCount}
