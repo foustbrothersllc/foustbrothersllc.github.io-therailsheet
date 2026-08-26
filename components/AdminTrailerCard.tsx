@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 
 interface AdminTrailerCardProps {
   trailer: Trailer;
+  profileId: string;
   onRevert: () => void;
   onEdit: () => void;
   onFlag: () => void;
@@ -20,6 +21,7 @@ interface AdminTrailerCardProps {
 
 export function AdminTrailerCard({
   trailer,
+  profileId,
   onRevert,
   onEdit,
   onFlag,
@@ -31,15 +33,15 @@ export function AdminTrailerCard({
 }: AdminTrailerCardProps) {
   const supabase = createClient();
   const [flagCreator, setFlagCreator] = useState<Profile | null>(null);
-  const [notesCount, setNotesCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
   const isDeparted = trailer.status === "departed";
 
   useEffect(() => {
     if (trailer.flag_created_by) {
       fetchFlagCreator(trailer.flag_created_by);
     }
-    fetchNotesCount();
-  }, [trailer.flag_created_by, trailer.id]);
+    fetchUnreadCount();
+  }, [trailer.flag_created_by, trailer.id, profileId]);
 
   async function fetchFlagCreator(userId: string) {
     const { data } = await supabase
@@ -53,13 +55,19 @@ export function AdminTrailerCard({
     }
   }
 
-  async function fetchNotesCount() {
+  async function fetchUnreadCount() {
     const { data } = await supabase
       .from("admin_notes")
-      .select("id", { count: "exact" })
+      .select("id, read_by_ids")
       .eq("trailer_id", trailer.id);
 
-    setNotesCount(data?.length || 0);
+    if (data) {
+      const unread = data.filter(note => {
+        const readByIds = note.read_by_ids || [];
+        return !readByIds.includes(profileId);
+      }).length;
+      setUnreadCount(unread);
+    }
   }
 
   const routeLine = [
@@ -77,9 +85,12 @@ export function AdminTrailerCard({
     <div className="flex items-stretch bg-yard-surface border border-yard-border rounded-card overflow-hidden">
       <div className={cn("w-1.5 shrink-0", isDeparted ? "bg-depart" : "bg-amber")} />
       <div className="flex items-center gap-2 px-2 shrink-0">
-        {notesCount > 0 && (
-          <div title={`${notesCount} note${notesCount === 1 ? "" : "s"}`} className="flex items-center gap-1 text-xs text-amber">
-            <MessageSquare size={14} />
+        {unreadCount > 0 && (
+          <div title={`${unreadCount} unread note${unreadCount === 1 ? "" : "s"}`} className="flex items-center gap-1 text-xs">
+            <MessageSquare size={14} className="text-amber" />
+            <span className="bg-amber text-yard-bg text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+              {unreadCount}
+            </span>
           </div>
         )}
       </div>
