@@ -34,6 +34,7 @@ export function AdminTrailerCard({
   const supabase = createClient();
   const [flagCreator, setFlagCreator] = useState<Profile | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [totalNotes, setTotalNotes] = useState(0);
   const isDeparted = trailer.status === "departed";
 
   useEffect(() => {
@@ -62,6 +63,7 @@ export function AdminTrailerCard({
       .eq("trailer_id", trailer.id);
 
     if (data) {
+      setTotalNotes(data.length);
       const unread = data.filter(note => {
         const readByIds = note.read_by_ids || [];
         return !readByIds.includes(profileId);
@@ -85,12 +87,14 @@ export function AdminTrailerCard({
     <div className="flex items-stretch bg-yard-surface border border-yard-border rounded-card overflow-hidden">
       <div className={cn("w-1.5 shrink-0", isDeparted ? "bg-depart" : "bg-amber")} />
       <div className="flex items-center gap-2 px-2 shrink-0">
-        {unreadCount > 0 && (
-          <div title={`${unreadCount} unread note${unreadCount === 1 ? "" : "s"}`} className="flex items-center gap-1 text-xs">
-            <MessageSquare size={14} className="text-amber" />
-            <span className="bg-amber text-yard-bg text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-              {unreadCount}
-            </span>
+        {totalNotes > 0 && (
+          <div title={`${totalNotes} note${totalNotes === 1 ? "" : "s"}`} className="flex items-center gap-1 text-xs">
+            <MessageSquare size={14} className={unreadCount > 0 ? "text-amber" : "text-yard-muted"} />
+            {unreadCount > 0 && (
+              <span className="bg-amber text-yard-bg text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
           </div>
         )}
       </div>
