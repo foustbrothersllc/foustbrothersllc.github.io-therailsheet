@@ -222,6 +222,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                   <AdminTrailerCard
                     key={t.id}
                     trailer={t}
+                    profileId={profile.id}
                     onRevert={() => handleRevert(t)}
                     onEdit={() => setEditing(t)}
                     onFlag={() => setFlagging(t)}
@@ -245,6 +246,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                       <AdminTrailerCard
                         key={t.id}
                         trailer={t}
+                        profileId={profile.id}
                         onRevert={() => handleRevert(t)}
                         onEdit={() => setEditing(t)}
                         onFlag={() => setFlagging(t)}
@@ -276,6 +278,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                   <AdminTrailerCard
                     key={t.id}
                     trailer={t}
+                    profileId={profile.id}
                     onRevert={() => handleRevert(t)}
                     onEdit={() => setEditing(t)}
                     onFlag={() => setFlagging(t)}
