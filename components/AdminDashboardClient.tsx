@@ -16,7 +16,7 @@ import { useTrailers } from "@/hooks/useTrailers";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
-import { LogOut, Plus, RefreshCw, Search, Upload, X, FileText, Snowflake } from "lucide-react";
+import { CheckSquare, LogOut, Plus, RefreshCw, Search, Trash2, Upload, X, FileText, Snowflake } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
@@ -41,6 +41,10 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const [deletingBusy, setDeletingBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Auto-release cold trailers when at_rail is depleted
   useEffect(() => {
@@ -129,6 +133,34 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
     setDeleting(null);
   }
 
+  function toggleSelectMode() {
+    setSelectMode((v) => !v);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+    await supabase.from("trailers").delete().in("id", Array.from(selectedIds));
+    setBulkDeleting(false);
+    setShowBulkDeleteConfirm(false);
+    setSelectedIds(new Set());
+    setSelectMode(false);
+    await refresh();
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="flex items-center justify-between px-6 h-16 border-b border-yard-border shrink-0">
@@ -182,6 +214,32 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
               <RefreshCw size={15} className={cn(refreshing && "animate-spin")} />
               Refresh
             </button>
+            <button
+              onClick={toggleSelectMode}
+              title={selectMode ? "Cancel selection" : "Select multiple trailers"}
+              aria-label={selectMode ? "Cancel selection" : "Select multiple trailers"}
+              className={cn(
+                "inline-flex items-center gap-1.5 h-9 px-3.5 rounded-card border text-sm",
+                selectMode
+                  ? "bg-amber/15 border-amber text-amber font-semibold"
+                  : "bg-yard-panel border-yard-border text-yard-text hover:border-yard-borderLight"
+              )}
+            >
+              <CheckSquare size={15} />
+              {selectMode ? "Cancel" : "Select"}
+            </button>
+            {selectMode && (
+              <button
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                disabled={selectedIds.size === 0}
+                title="Delete selected trailers"
+                aria-label="Delete selected trailers"
+                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-card bg-danger text-white text-sm font-semibold hover:bg-danger/90 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Trash2 size={15} />
+                Delete Selected{selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
+              </button>
+            )}
             <div className="relative flex-1 min-w-[180px] max-w-sm ml-auto">
               <Search
                 size={16}
@@ -231,6 +289,9 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                     onMarkDeparted={() => handleMarkDeparted(t)}
                     onDelete={() => setDeleting(t)}
                     onViewDetails={() => setSelectedTrailerDetail(t)}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(t.id)}
+                    onToggleSelect={() => toggleSelected(t.id)}
                   />
                 ))}
 
@@ -255,6 +316,9 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                         onMarkDeparted={() => handleMarkDeparted(t)}
                         onDelete={() => setDeleting(t)}
                         onViewDetails={() => setSelectedTrailerDetail(t)}
+                        selectMode={selectMode}
+                        selected={selectedIds.has(t.id)}
+                        onToggleSelect={() => toggleSelected(t.id)}
                       />
                     ))}
                   </>
@@ -287,6 +351,9 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                     onMarkDeparted={() => handleMarkDeparted(t)}
                     onDelete={() => setDeleting(t)}
                     onViewDetails={() => setSelectedTrailerDetail(t)}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(t.id)}
+                    onToggleSelect={() => toggleSelected(t.id)}
                   />
                 ))}
               </PullToRefresh>
@@ -318,6 +385,16 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
         loading={deletingBusy}
         onCancel={() => setDeleting(null)}
         onConfirm={handleDelete}
+      />
+      <ConfirmModal
+        open={showBulkDeleteConfirm}
+        title="Delete Trailers"
+        message={`Remove ${selectedIds.size} trailer${selectedIds.size === 1 ? "" : "s"} from active inventory? This can't be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        loading={bulkDeleting}
+        onCancel={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={handleBulkDelete}
       />
     </div>
   );
