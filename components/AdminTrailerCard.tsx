@@ -2,7 +2,7 @@
 
 import { Trailer, Profile } from "@/lib/types";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import { Flame, Pencil, RotateCcw, Send, Tag, Trash2, User, Snowflake, MessageSquare } from "lucide-react";
+import { Check, Flame, Pencil, RotateCcw, Send, Tag, Trash2, User, Snowflake, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -17,6 +17,9 @@ interface AdminTrailerCardProps {
   onMarkDeparted: () => void;
   onDelete: () => void;
   onViewDetails: () => void;
+  selectMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 export function AdminTrailerCard({
@@ -30,6 +33,9 @@ export function AdminTrailerCard({
   onMarkDeparted,
   onDelete,
   onViewDetails,
+  selectMode = false,
+  selected = false,
+  onToggleSelect,
 }: AdminTrailerCardProps) {
   const supabase = createClient();
   const [flagCreator, setFlagCreator] = useState<Profile | null>(null);
@@ -84,8 +90,29 @@ export function AdminTrailerCard({
     .join(" / ");
 
   return (
-    <div className="flex items-stretch bg-yard-surface border border-yard-border rounded-card overflow-hidden">
+    <div
+      className={cn(
+        "flex items-stretch bg-yard-surface border rounded-card overflow-hidden",
+        selectMode && selected ? "border-amber ring-1 ring-amber" : "border-yard-border"
+      )}
+    >
       <div className={cn("w-1.5 shrink-0", isDeparted ? "bg-depart" : "bg-amber")} />
+      {selectMode && (
+        <button
+          onClick={onToggleSelect}
+          aria-label={selected ? "Deselect trailer" : "Select trailer"}
+          className="flex items-center justify-center pl-3 pr-1 shrink-0"
+        >
+          <span
+            className={cn(
+              "h-5 w-5 rounded flex items-center justify-center border-2 transition-colors",
+              selected ? "bg-amber border-amber" : "border-yard-borderLight"
+            )}
+          >
+            {selected && <Check size={14} className="text-yard-bg" strokeWidth={3} />}
+          </span>
+        </button>
+      )}
       <div className="flex items-center gap-2 px-2 shrink-0">
         {totalNotes > 0 && (
           <div title={`${totalNotes} note${totalNotes === 1 ? "" : "s"}`} className="flex items-center gap-1 text-xs">
@@ -100,7 +127,7 @@ export function AdminTrailerCard({
       </div>
       <div
         className="flex-1 min-w-0 px-3.5 py-3 cursor-pointer hover:bg-yard-panel/50 transition-colors"
-        onClick={onViewDetails}
+        onClick={selectMode ? onToggleSelect : onViewDetails}
       >
         <p className="font-stencil font-bold text-base tracking-wider text-yard-text truncate">
           {trailer.equipment_number}
@@ -124,6 +151,7 @@ export function AdminTrailerCard({
           </p>
         )}
       </div>
+      {!selectMode && (
       <div className="flex items-center gap-0.5 px-2 border-l border-yard-border shrink-0">
         <button
           onClick={onToggleHot}
@@ -201,6 +229,7 @@ export function AdminTrailerCard({
           <Trash2 size={16} />
         </button>
       </div>
+      )}
     </div>
   );
 }
