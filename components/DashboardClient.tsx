@@ -11,7 +11,7 @@ import { useTrailers } from "@/hooks/useTrailers";
 import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
 import { LogOut, Search, X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 interface DashboardClientProps {
   initialProfile: Profile;
@@ -26,6 +26,7 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
   const [tab, setTab] = useState<"at_rail" | "departed">("at_rail");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Trailer | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const matches = (t: Trailer) =>
     query.trim() === "" || t.equipment_number.includes(query.trim().toUpperCase());
@@ -98,6 +99,7 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
             className="absolute left-3 top-1/2 -translate-y-1/2 text-yard-faint pointer-events-none"
           />
           <input
+            ref={searchInputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             inputMode="numeric"
@@ -106,7 +108,10 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
           />
           {query && (
             <button
-              onClick={() => setQuery("")}
+              onClick={() => {
+                setQuery("");
+                searchInputRef.current?.focus();
+              }}
               aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-yard-faint hover:text-yard-text"
             >
@@ -124,6 +129,7 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
             className="absolute left-3 top-1/2 -translate-y-1/2 text-yard-faint pointer-events-none"
           />
           <input
+            ref={searchInputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             inputMode="numeric"
@@ -132,7 +138,10 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
           />
           {query && (
             <button
-              onClick={() => setQuery("")}
+              onClick={() => {
+                setQuery("");
+                searchInputRef.current?.focus();
+              }}
               aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-yard-faint hover:text-yard-text"
             >
