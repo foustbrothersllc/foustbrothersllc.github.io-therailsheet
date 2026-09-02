@@ -26,7 +26,10 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
   const [tab, setTab] = useState<"at_rail" | "departed">("at_rail");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Trailer | null>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  // Separate refs: both inputs are always rendered (one hidden via CSS), so a
+  // shared ref would point at the hidden desktop input and focus() would no-op.
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
+  const desktopSearchRef = useRef<HTMLInputElement>(null);
 
   const matches = (t: Trailer) =>
     query.trim() === "" || t.equipment_number.includes(query.trim().toUpperCase());
@@ -99,7 +102,7 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
             className="absolute left-3 top-1/2 -translate-y-1/2 text-yard-faint pointer-events-none"
           />
           <input
-            ref={searchInputRef}
+            ref={mobileSearchRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             inputMode="numeric"
@@ -108,9 +111,13 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
           />
           {query && (
             <button
+              type="button"
+              // Keep the input focused (and the mobile keyboard open) while tapping the X
+              onPointerDown={(e) => e.preventDefault()}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 setQuery("");
-                searchInputRef.current?.focus();
+                mobileSearchRef.current?.focus();
               }}
               aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-yard-faint hover:text-yard-text"
@@ -129,7 +136,7 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
             className="absolute left-3 top-1/2 -translate-y-1/2 text-yard-faint pointer-events-none"
           />
           <input
-            ref={searchInputRef}
+            ref={desktopSearchRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             inputMode="numeric"
@@ -138,9 +145,13 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
           />
           {query && (
             <button
+              type="button"
+              // Keep the input focused (and the mobile keyboard open) while tapping the X
+              onPointerDown={(e) => e.preventDefault()}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 setQuery("");
-                searchInputRef.current?.focus();
+                desktopSearchRef.current?.focus();
               }}
               aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-yard-faint hover:text-yard-text"
