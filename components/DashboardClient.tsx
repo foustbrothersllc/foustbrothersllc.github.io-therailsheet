@@ -31,6 +31,12 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
   const mobileSearchRef = useRef<HTMLInputElement>(null);
   const desktopSearchRef = useRef<HTMLInputElement>(null);
 
+  // Clear the query while keeping the given input focused so the user can keep typing.
+  const clearSearch = (input: HTMLInputElement | null) => {
+    setQuery("");
+    input?.focus();
+  };
+
   const matches = (t: Trailer) =>
     query.trim() === "" || t.equipment_number.includes(query.trim().toUpperCase());
 
@@ -112,13 +118,15 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
           {query && (
             <button
               type="button"
-              // Keep the input focused (and the mobile keyboard open) while tapping the X
-              onPointerDown={(e) => e.preventDefault()}
+              // Never let the X take focus away from the input (keeps the mobile keyboard open).
+              // On touch devices we handle the tap in touchend and cancel the synthetic
+              // mouse/click events, since iOS won't reliably re-open a keyboard it just closed.
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                setQuery("");
-                mobileSearchRef.current?.focus();
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                clearSearch(mobileSearchRef.current);
               }}
+              onClick={() => clearSearch(mobileSearchRef.current)}
               aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-yard-faint hover:text-yard-text"
             >
@@ -146,13 +154,15 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
           {query && (
             <button
               type="button"
-              // Keep the input focused (and the mobile keyboard open) while tapping the X
-              onPointerDown={(e) => e.preventDefault()}
+              // Never let the X take focus away from the input (keeps the mobile keyboard open).
+              // On touch devices we handle the tap in touchend and cancel the synthetic
+              // mouse/click events, since iOS won't reliably re-open a keyboard it just closed.
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                setQuery("");
-                desktopSearchRef.current?.focus();
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                clearSearch(desktopSearchRef.current);
               }}
+              onClick={() => clearSearch(desktopSearchRef.current)}
               aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-yard-faint hover:text-yard-text"
             >
