@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { Profile, Trailer } from "@/lib/types";
 import { CheckSquare, LogOut, Plus, RefreshCw, Search, Trash2, Upload, X, FileText, Snowflake } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface AdminDashboardClientProps {
   initialProfile: Profile;
@@ -40,6 +40,13 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const [selectedTrailerDetail, setSelectedTrailerDetail] = useState<Trailer | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
   const [query, setQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Clear the query while keeping the search box focused so the user can keep typing.
+  const clearSearch = () => {
+    setQuery("");
+    searchInputRef.current?.focus();
+  };
   const [refreshing, setRefreshing] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -246,6 +253,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-yard-faint pointer-events-none"
               />
               <input
+                ref={searchInputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search equipment number"
@@ -253,7 +261,16 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
               />
               {query && (
                 <button
-                  onClick={() => setQuery("")}
+                  type="button"
+                  // Never let the X take focus away from the input (keeps the mobile keyboard open).
+                  // On touch devices we handle the tap in touchend and cancel the synthetic
+                  // mouse/click events, since iOS won't reliably re-open a keyboard it just closed.
+                  onMouseDown={(e) => e.preventDefault()}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    clearSearch();
+                  }}
+                  onClick={clearSearch}
                   aria-label="Clear search"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-yard-faint hover:text-yard-text"
                 >
