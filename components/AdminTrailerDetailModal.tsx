@@ -152,7 +152,7 @@ export function AdminTrailerDetailModal({
               Hot
             </span>
           )}
-          {trailer.is_cold && (
+          {(trailer.is_cold || trailer.is_wrong_dest) && (
             <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-depart bg-depart/15 border border-depart/30 rounded-full px-2 py-0.5">
               <Snowflake size={10} />
               Cold
