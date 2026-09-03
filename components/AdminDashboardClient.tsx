@@ -170,14 +170,11 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
     });
   }
 
-  // Cold trailers are still status "at_rail" under the hood (cold just hides them
-  // from drivers) and they render inside the At Rail column, so "All At Rail"
-  // picks up both. Replaces the current selection rather than adding to it.
-  function selectAllIn(scope: "at_rail" | "departed" | "all") {
-    const atRailIds = [...filteredAtRail, ...filteredCold].map((t) => t.id);
-    const departedIds = filteredDeparted.map((t) => t.id);
-    const ids =
-      scope === "at_rail" ? atRailIds : scope === "departed" ? departedIds : [...atRailIds, ...departedIds];
+  // Selects every trailer currently visible (respects the search filter),
+  // across At Rail, Cold, and Departed. Replaces the current selection
+  // rather than adding to it.
+  function selectAll() {
+    const ids = [...filteredAtRail, ...filteredCold, ...filteredDeparted].map((t) => t.id);
     setSelectedIds(new Set(ids));
   }
 
@@ -260,25 +257,14 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
               {selectMode ? "Cancel" : "Select"}
             </button>
             {selectMode && (
-              <select
-                value=""
-                onChange={(e) => {
-                  const scope = e.target.value as "at_rail" | "departed" | "all" | "";
-                  if (scope) selectAllIn(scope);
-                  e.target.value = "";
-                }}
-                aria-label="Select all"
-                className="h-9 px-3 rounded-card bg-yard-panel border border-yard-border text-sm text-yard-text outline-none focus:border-amber"
+              <button
+                onClick={selectAll}
+                title="Select all trailers"
+                aria-label="Select all trailers"
+                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-card bg-yard-panel border border-yard-border text-sm text-yard-text hover:border-yard-borderLight"
               >
-                <option value="">Select All…</option>
-                <option value="at_rail">
-                  All At Rail ({filteredAtRail.length + filteredCold.length})
-                </option>
-                <option value="departed">All Departed ({filteredDeparted.length})</option>
-                <option value="all">
-                  Everything ({filteredAtRail.length + filteredCold.length + filteredDeparted.length})
-                </option>
-              </select>
+                Select All
+              </button>
             )}
             {selectMode && (
               <button
