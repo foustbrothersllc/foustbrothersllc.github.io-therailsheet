@@ -100,11 +100,15 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
         assigned_driver_name: null,
         assigned_driver_emp_id: null,
         is_cold: false,
+        is_wrong_dest: false,
       })
       .eq("id", trailer.id);
   }
 
   async function handleMarkDeparted(trailer: Trailer) {
+    // Clearing is_wrong_dest here for the same reason is_cold is cleared: the
+    // Departed list filters out anything still flagged as cold-like, so leaving
+    // either flag set would make a departed trailer vanish from every list.
     await supabase
       .from("trailers")
       .update({
@@ -113,6 +117,7 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
         assigned_driver_name: null,
         assigned_driver_emp_id: null,
         is_cold: false,
+        is_wrong_dest: false,
       })
       .eq("id", trailer.id)
       .eq("status", "at_rail");
@@ -126,9 +131,17 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   }
 
   async function handleToggleCold(trailer: Trailer) {
+    const isEffectivelyCold = trailer.is_cold || trailer.is_wrong_dest;
+    // Clicking the button always fully releases a trailer, regardless of whether
+    // it was cold manually, auto-flagged for a wrong destination, or both — the
+    // admin sees one button, so one click clears everything it represents. This
+    // is also the only thing that ever clears is_wrong_dest, and it sticks: the
+    // database only sets that flag once, on creation, never again automatically.
     await supabase
       .from("trailers")
-      .update({ is_cold: !trailer.is_cold })
+      .update(
+        isEffectivelyCold ? { is_cold: false, is_wrong_dest: false } : { is_cold: true }
+      )
       .eq("id", trailer.id);
   }
 
@@ -155,6 +168,17 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
       }
       return next;
     });
+  }
+
+  // Cold trailers are still status "at_rail" under the hood (cold just hides them
+  // from drivers) and they render inside the At Rail column, so "All At Rail"
+  // picks up both. Replaces the current selection rather than adding to it.
+  function selectAllIn(scope: "at_rail" | "departed" | "all") {
+    const atRailIds = [...filteredAtRail, ...filteredCold].map((t) => t.id);
+    const departedIds = filteredDeparted.map((t) => t.id);
+    const ids =
+      scope === "at_rail" ? atRailIds : scope === "departed" ? departedIds : [...atRailIds, ...departedIds];
+    setSelectedIds(new Set(ids));
   }
 
   async function handleBulkDelete() {
@@ -235,6 +259,27 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
               <CheckSquare size={15} />
               {selectMode ? "Cancel" : "Select"}
             </button>
+            {selectMode && (
+              <select
+                value=""
+                onChange={(e) => {
+                  const scope = e.target.value as "at_rail" | "departed" | "all" | "";
+                  if (scope) selectAllIn(scope);
+                  e.target.value = "";
+                }}
+                aria-label="Select all"
+                className="h-9 px-3 rounded-card bg-yard-panel border border-yard-border text-sm text-yard-text outline-none focus:border-amber"
+              >
+                <option value="">Select All…</option>
+                <option value="at_rail">
+                  All At Rail ({filteredAtRail.length + filteredCold.length})
+                </option>
+                <option value="departed">All Departed ({filteredDeparted.length})</option>
+                <option value="all">
+                  Everything ({filteredAtRail.length + filteredCold.length + filteredDeparted.length})
+                </option>
+              </select>
+            )}
             {selectMode && (
               <button
                 onClick={() => setShowBulkDeleteConfirm(true)}
