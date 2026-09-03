@@ -20,6 +20,10 @@ export interface Trailer {
   // separate column so it never gets caught by the "release all cold
   // trailers when the lot empties out" logic that's specific to is_cold.
   is_wrong_dest: boolean;
+  // Optional — most CSVs won't have this column, and that's fine. When present
+  // and the trailer is being newly created, the database auto-marks it Hot if
+  // this date is before today. Stored as an ISO date string ("YYYY-MM-DD").
+  due_date: string | null;
   assigned_to_id: string | null;
   assigned_driver_name: string | null;
   assigned_driver_emp_id: string | null;
@@ -68,5 +72,6 @@ export interface ParsedTrailerRow {
   destination: string | null;
   destination_sort_type: string | null;
   load_percentage: number | null;
+  due_date: string | null;
   issues: string[];
 }
