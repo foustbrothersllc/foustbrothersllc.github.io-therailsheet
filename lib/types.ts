@@ -14,6 +14,12 @@ export interface Trailer {
   flag_created_at: string | null;
   is_hot: boolean;
   is_cold: boolean;
+  // Auto-set by the database only when a trailer is first created (never on
+  // re-import) when destination isn't GRENC. Behaves like is_cold everywhere
+  // in the UI (hidden from drivers, shows in the Cold section) but is a
+  // separate column so it never gets caught by the "release all cold
+  // trailers when the lot empties out" logic that's specific to is_cold.
+  is_wrong_dest: boolean;
   assigned_to_id: string | null;
   assigned_driver_name: string | null;
   assigned_driver_emp_id: string | null;
