@@ -53,7 +53,11 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  // Auto-release cold trailers when at_rail is depleted
+  // Auto-release cold trailers (manual Cold and auto-flagged wrong-destination
+  // alike) when at_rail is depleted. Anything that still isn't actually ready
+  // to go out (still wrong dest, etc.) is expected to be deleted by an admin
+  // rather than sit flagged forever — this just clears the flags so it's
+  // visible again to make that call on.
   useEffect(() => {
     if (atRail.length === 0 && cold.length > 0) {
       releaseColdTrailers();
@@ -61,21 +65,10 @@ export function AdminDashboardClient({ initialProfile }: AdminDashboardClientPro
   }, [atRail.length, cold.length]);
 
   async function releaseColdTrailers() {
-    // Get all cold trailers
-    const { data: coldTrailers } = await supabase
+    await supabase
       .from("trailers")
-      .select("id")
-      .eq("is_cold", true);
-
-    if (!coldTrailers || coldTrailers.length === 0) return;
-
-    // Remove cold flag from all of them
-    for (const trailer of coldTrailers) {
-      await supabase
-        .from("trailers")
-        .update({ is_cold: false })
-        .eq("id", trailer.id);
-    }
+      .update({ is_cold: false, is_wrong_dest: false })
+      .or("is_cold.eq.true,is_wrong_dest.eq.true");
   }
 
   const matches = (t: Trailer) =>
