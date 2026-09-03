@@ -168,11 +168,15 @@ export function AdminTrailerCard({
         </button>
         <button
           onClick={onToggleCold}
-          title={trailer.is_cold ? "Clear COLD" : "Mark COLD — hide from drivers"}
+          // is_wrong_dest is invisible to everyone — this button and its label look
+          // exactly the same whether a trailer is cold manually or auto-flagged.
+          title={
+            trailer.is_cold || trailer.is_wrong_dest ? "Clear COLD" : "Mark COLD — hide from drivers"
+          }
           aria-label="Toggle COLD"
           className={cn(
             "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
-            trailer.is_cold
+            trailer.is_cold || trailer.is_wrong_dest
               ? "text-depart bg-depart/15 hover:bg-depart/25"
               : "text-yard-muted hover:text-depart hover:bg-depart/10"
           )}
