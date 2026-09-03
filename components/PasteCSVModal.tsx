@@ -6,27 +6,28 @@ import { createClient } from "@/lib/supabase/client";
 import { parseSheetRows, recomputeIssues } from "@/lib/importParser";
 import { ParsedTrailerRow } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, CheckCircle2, UploadCloud } from "lucide-react";
+import { useRef, useState } from "react";
+import * as XLSX from "xlsx";
 
-interface PasteCSVModalProps {
+interface CsvImportModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-type Stage = "paste" | "review" | "importing" | "done";
+type Stage = "upload" | "review" | "importing" | "done";
 
-export function PasteCSVModal({ open, onClose }: PasteCSVModalProps) {
+export function CsvImportModal({ open, onClose }: CsvImportModalProps) {
   const supabase = createClient();
-  const [stage, setStage] = useState<Stage>("paste");
-  const [csvText, setCsvText] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [stage, setStage] = useState<Stage>("upload");
+  const [dragOver, setDragOver] = useState(false);
   const [rows, setRows] = useState<ParsedTrailerRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [importedCount, setImportedCount] = useState(0);
 
   function reset() {
-    setStage("paste");
-    setCsvText("");
+    setStage("upload");
     setRows([]);
     setError(null);
     setImportedCount(0);
@@ -37,29 +38,27 @@ export function PasteCSVModal({ open, onClose }: PasteCSVModalProps) {
     onClose();
   }
 
-  function parseCSVText() {
+  async function handleFile(file: File) {
     setError(null);
 
     try {
-      // Split by newlines and parse as CSV
-      const lines = csvText
-        .trim()
-        .split("\n")
-        .map((line) =>
-          line.split(",").map((cell) => {
-            const trimmed = cell.trim();
-            return trimmed === "" ? null : trimmed;
-          })
-        );
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const raw: unknown[][] = XLSX.utils.sheet_to_json(firstSheet, {
+        header: 1,
+        defval: null,
+        raw: true,
+      });
 
-      if (lines.length === 0) {
-        setError("No data to parse.");
+      if (raw.length === 0) {
+        setError("That file doesn't have any rows in it.");
         return;
       }
 
-      const parsed = parseSheetRows(lines);
+      const parsed = parseSheetRows(raw);
       if (parsed.length === 0) {
-        setError("Couldn't find any data rows in that CSV.");
+        setError("Couldn't find any data rows in that file.");
         return;
       }
 
@@ -67,7 +66,7 @@ export function PasteCSVModal({ open, onClose }: PasteCSVModalProps) {
       setStage("review");
     } catch (err) {
       console.error(err);
-      setError("Couldn't parse that CSV. Make sure it's comma-separated.");
+      setError("Couldn't read that file. Make sure it's a .csv or .xlsx.");
     }
   }
 
@@ -84,6 +83,12 @@ export function PasteCSVModal({ open, onClose }: PasteCSVModalProps) {
     setStage("importing");
     const cleanRows = rows.filter((r) => r.issues.length === 0);
 
+    // Deliberately omit status/assignment/flag/hot fields here. On INSERT
+    // (brand-new equipment number) they fall back to the table's defaults
+    // (status = 'at_rail', everything else null/false) — exactly right for
+    // a new trailer. On UPDATE (equipment number already exists), leaving
+    // them out means they're never touched, so re-importing the same file
+    // never bounces an already-Departed trailer back to At Rail.
     const payload = cleanRows.map((r) => ({
       equipment_number: r.equipment_number!,
       pickup_number: r.pickup_number!,
@@ -92,6 +97,7 @@ export function PasteCSVModal({ open, onClose }: PasteCSVModalProps) {
       destination: r.destination || null,
       destination_sort_type: r.destination_sort_type || null,
       load_percentage: r.load_percentage,
+      due_date: r.due_date,
     }));
 
     const { error } = await supabase
@@ -112,38 +118,45 @@ export function PasteCSVModal({ open, onClose }: PasteCSVModalProps) {
   const problemRows = rows.filter((r) => r.issues.length > 0);
 
   return (
-    <Modal open={open} onClose={handleClose} title="Paste CSV Data">
-      {stage === "paste" && (
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs uppercase tracking-wide text-yard-muted mb-2">
-              Paste CSV Data
-            </label>
-            <textarea
-              value={csvText}
-              onChange={(e) => setCsvText(e.target.value)}
-              placeholder="Equipment #,Pickup #,Origin,Destination&#10;EMHU489025,PU123,CHI,NYC&#10;EMHU489026,PU124,LAX,DEN"
-              rows={8}
-              className="w-full px-3.5 py-3 rounded-card bg-yard-bg border border-yard-border focus:border-amber outline-none text-sm font-mono resize-none"
-            />
-            <p className="text-xs text-yard-muted mt-2">
-              Paste data directly from Excel (copy and paste as CSV format)
-            </p>
-          </div>
-
+    <Modal open={open} onClose={handleClose} title="Import Equipment">
+      {stage === "upload" && (
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) handleFile(file);
+          }}
+          onClick={() => fileInputRef.current?.click()}
+          className={cn(
+            "flex flex-col items-center justify-center gap-3 rounded-card border-2 border-dashed py-12 cursor-pointer transition-colors",
+            dragOver ? "border-amber bg-amber/5" : "border-yard-border hover:border-yard-borderLight"
+          )}
+        >
+          <UploadCloud size={28} className="text-yard-faint" />
+          <p className="text-sm text-yard-muted text-center px-6">
+            Drag a .csv or .xlsx file here, or tap to browse
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFile(file);
+            }}
+          />
           {error && (
-            <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2">
+            <p className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-card px-3 py-2 mx-6">
               {error}
             </p>
           )}
-
-          <Button
-            className="w-full"
-            disabled={csvText.trim().length === 0}
-            onClick={parseCSVText}
-          >
-            Parse & Review
-          </Button>
         </div>
       )}
 
@@ -221,29 +234,20 @@ export function PasteCSVModal({ open, onClose }: PasteCSVModalProps) {
             </p>
           )}
 
-          <div className="flex gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => setStage("paste")}
-              className="flex-1"
-            >
-              Back
-            </Button>
-            <Button
-              className="flex-1"
-              disabled={validRows.length === 0}
-              onClick={handleImport}
-            >
-              Import ({validRows.length})
-            </Button>
-          </div>
+          <Button
+            className="w-full"
+            disabled={validRows.length === 0}
+            onClick={handleImport}
+          >
+            Fix &amp; Import ({validRows.length})
+          </Button>
         </div>
       )}
 
       {stage === "importing" && (
         <div className="py-12 text-center">
           <div className="h-8 w-8 mx-auto rounded-full border-2 border-amber border-t-transparent animate-spin mb-4" />
-          <p className="text-sm text-yard-muted">Importing trailers…</p>
+          <p className="text-sm text-yard-muted">Writing to the yard board…</p>
         </div>
       )}
 
