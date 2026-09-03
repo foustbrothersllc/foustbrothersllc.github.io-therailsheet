@@ -97,6 +97,7 @@ export function CsvImportModal({ open, onClose }: CsvImportModalProps) {
       destination: r.destination || null,
       destination_sort_type: r.destination_sort_type || null,
       load_percentage: r.load_percentage,
+      due_date: r.due_date,
     }));
 
     const { error } = await supabase
