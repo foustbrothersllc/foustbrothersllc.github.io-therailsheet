@@ -7,7 +7,8 @@ type Field =
   | "origin_sort_type"
   | "destination"
   | "destination_sort_type"
-  | "load_percentage";
+  | "load_percentage"
+  | "due_date";
 
 // Ordered most-specific-first: an earlier alias always wins over a later
 // one if a sheet has multiple columns that could plausibly match (e.g. a
@@ -39,6 +40,9 @@ const ALIASES: Record<Field, string[]> = {
     "destination sort", "destination sort type", "d sort", "dsort", "dest sort",
   ],
   load_percentage: ["load %", "load percent", "load percentage", "load", "%"],
+  // Optional — not every sheet has this column, and that's fine; a row
+  // with no matching column just gets due_date: null.
+  due_date: ["due dt", "due date", "duedate", "due", "date due"],
 };
 
 const ALL_ALIASES = new Set(Object.values(ALIASES).flat());
@@ -75,6 +79,39 @@ function cleanLoadPercentage(value: unknown): number | null {
   const n = Number(String(value).replace(/[^0-9.-]/g, ""));
   if (Number.isNaN(n)) return null;
   return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+/** Returns "YYYY-MM-DD", or null if the cell is empty/unparseable. Handles
+ * plain text dates ("9/2/2026") from CSVs and Excel's numeric date serials
+ * (from .xlsx files parsed with `raw: true`). */
+function cleanDate(value: unknown): string | null {
+  if (value === null || value === undefined || value === "") return null;
+
+  if (typeof value === "number") {
+    // Excel serial date: days since 1899-12-30 (accounts for Excel's leap-year bug).
+    const ms = Math.round((value - 25569) * 86400 * 1000);
+    const d = new Date(ms);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+  }
+
+  const s = String(value).trim();
+  if (!s) return null;
+
+  const slash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (slash) {
+    const [, mm, dd, yRaw] = slash;
+    const yyyy = yRaw.length === 2 ? `20${yRaw}` : yRaw;
+    return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+  }
+
+  const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) {
+    const [, yyyy, mm, dd] = iso;
+    return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+  }
+
+  const parsed = new Date(s);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString().slice(0, 10);
 }
 
 /**
@@ -203,6 +240,7 @@ export function parseSheetRows(rawRows: unknown[][]): ParsedTrailerRow[] {
       destination: cleanText(get("destination")),
       destination_sort_type: cleanText(get("destination_sort_type")),
       load_percentage: cleanLoadPercentage(get("load_percentage")),
+      due_date: cleanDate(get("due_date")),
       issues: [] as string[],
     };
   });
